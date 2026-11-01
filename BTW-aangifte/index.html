@@ -89,6 +89,12 @@ tr.out_of_period td{opacity:.6}
 .sheet textarea{min-height:110px;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 .notice{padding:10px 14px;border-radius:8px;background:var(--soft)}
 footer{font-size:.8rem;color:var(--muted);display:grid;gap:4px}
+.companybar{display:flex;gap:8px 10px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--line)}
+.companybar label{font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.companybar select{width:auto;min-width:min(260px,100%);max-width:100%;font-size:.95rem;font-weight:600;padding:7px 8px}
+.companybar .grow{flex:1}
+.rec tr.current td{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.rec .sub{display:block;font-size:.75rem;color:var(--muted)}
 .addrow{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--line)}
 .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 14px;border-top:1px solid var(--line)}
 .checks{list-style:none;margin:0;padding:0;display:grid;gap:6px}
@@ -113,11 +119,25 @@ footer{font-size:.8rem;color:var(--muted);display:grid;gap:4px}
     <span class="muted small">Enter the invoices and receipts. The return updates as you type.</span>
   </div>
 
-  <div class="panel settings">
-    <label for="c-name">Company name<input id="c-name" autocomplete="organization"></label>
-    <label for="c-vat">Company VAT number<input id="c-vat" placeholder="NL123456789B01"></label>
-    <label for="period">Period<select id="period"></select></label>
-    <label for="c-pct">Default deductible % (purchases)<input id="c-pct" inputmode="decimal"></label>
+  <section class="panel" id="companies" hidden>
+    <div class="sechead"><h2>Your companies</h2><span class="muted small" id="companies-count"></span></div>
+    <div class="scroll"><table class="rec" id="t-companies"></table></div>
+  </section>
+
+  <div class="panel">
+    <div class="companybar">
+      <label for="company-select">Company</label>
+      <select id="company-select"></select>
+      <span class="grow"></span>
+      <button id="add-company">+ Add company</button>
+      <button id="delete-company">Delete company</button>
+    </div>
+    <div class="settings">
+      <label for="c-name">Company name<input id="c-name" autocomplete="organization"></label>
+      <label for="c-vat">Company VAT number<input id="c-vat" placeholder="NL123456789B01"></label>
+      <label for="period">Period<select id="period"></select></label>
+      <label for="c-pct">Default deductible % (purchases)<input id="c-pct" inputmode="decimal"></label>
+    </div>
   </div>
 
   <div class="cards">
@@ -209,7 +229,7 @@ footer{font-size:.8rem;color:var(--muted);display:grid;gap:4px}
   </section>
 
   <section class="panel" id="records">
-    <div class="sechead"><h2>Filed returns</h2><span class="muted small" id="records-count"></span></div>
+    <div class="sechead"><h2>Filed returns</h2><span class="toolbar"><span class="muted small" id="records-count"></span><label class="ack small" for="records-all"><input type="checkbox" id="records-all"> All companies</label></span></div>
     <div class="scroll"><table class="rec" id="t-records"></table></div>
     <div class="actions">
       <button id="records-export">Export all records</button>
@@ -642,42 +662,86 @@ purchase;14-08-2026;H-77120;Hotel Adler Berlin;EU;DE811569869;services;7;200,00;
 purchase;21-07-2026;;Supermarkt De Hoek;NL;;goods;9;12,17;1,10;13,27;;100;kassabon
 purchase;03-09-2026;;Restaurant De Gouden Lepel;NL;;services;9;42,02;3,78;45,80;;0;horeca`};
 
-function exampleState(){
+// ---------------------------------------------------------------- companies and their working entries
+// ws holds every company, which one is open, and each company's own period and rows.
+// `state` is the open company's entries; `state.company` points at its settings.
+const WS_STORE = "nlvat-workspace-v2";
+let ws = null;
+const normVat = v => String(v || "").toUpperCase().replace(/[\s.\-]/g, "");
+function blankCompany(fields){
+  return Object.assign({id: "c" + Date.now().toString(36) + (seq++).toString(36), name: "", vat_number: "", deductible_pct: "100"}, fields || {});
+}
+function blankDraft(){ return {period: defaultPeriod(), rows: [], example: false, updatedAt: Date.now()}; }
+function exampleWorkspace(){
+  const c = blankCompany(EXAMPLE.company);
   const rows = NLVAT.rowsFromCsv(EXAMPLE.csv).rows.map(r => Object.assign(r, {id: newId()}));
-  return {example: true, company: Object.assign({}, EXAMPLE.company), period: EXAMPLE.period, rows, updatedAt: 0};
+  return {companies: [c], current: c.id, drafts: {[c.id]: {period: EXAMPLE.period, rows, example: true, updatedAt: 0}}, updatedAt: 0};
 }
-function emptyState(company){
-  return {example: false, period: defaultPeriod(), rows: [], updatedAt: Date.now(),
-          company: company || {name: DEFAULTS.name || "", vat_number: DEFAULTS.vat_number || "", deductible_pct: "100"}};
+function freshWorkspace(){
+  const c = blankCompany({name: DEFAULTS.name || "", vat_number: DEFAULTS.vat_number || ""});
+  return {companies: [c], current: c.id, drafts: {[c.id]: blankDraft()}, updatedAt: Date.now()};
 }
+function bind(){
+  let c = ws.companies.find(x => x.id === ws.current);
+  if (!c){ c = ws.companies[0]; ws.current = c.id; }
+  state = ws.drafts[c.id] || (ws.drafts[c.id] = blankDraft());
+  Object.defineProperty(state, "company", {value: c, enumerable: false, configurable: true, writable: true});
+}
+const isExample = () => ws.companies.length === 1 && !!(ws.drafts[ws.current] || {}).example;
+const companyLabel = c => (c.name || "Unnamed company") + (c.vat_number ? ` · ${c.vat_number}` : "");
 
-// ---------------------------------------------------------------- working entries: browser + (online) your account
-function saveLocal(){ try { localStorage.setItem(STORE, JSON.stringify(state)); } catch(e){} }
+// ---------------------------------------------------------------- saving: this browser, and (online) your account
+function saveLocal(){
+  try { localStorage.setItem(WS_STORE, JSON.stringify({version: 2, companies: ws.companies, current: ws.current, drafts: ws.drafts, updatedAt: ws.updatedAt})); } catch(e){}
+}
 function load(){
   try {
-    const s = JSON.parse(localStorage.getItem(STORE) || "null");
-    if (s && Array.isArray(s.rows)){ state = s; state.company = Object.assign({deductible_pct: "100"}, s.company); return; }
+    const s = JSON.parse(localStorage.getItem(WS_STORE) || "null");
+    if (s && Array.isArray(s.companies) && s.companies.length){ ws = s; ws.drafts = ws.drafts || {}; bind(); return; }
   } catch(e){}
-  state = exampleState();
+  try {   // entries saved before the page handled several companies
+    const s = JSON.parse(localStorage.getItem(STORE) || "null");
+    if (s && Array.isArray(s.rows)){
+      const c = blankCompany(Object.assign({}, s.company));
+      ws = {companies: [c], current: c.id, drafts: {[c.id]: {period: s.period, rows: s.rows, example: !!s.example, updatedAt: s.updatedAt || 0}}, updatedAt: s.updatedAt || 0};
+      bind(); return;
+    }
+  } catch(e){}
+  ws = exampleWorkspace(); bind();
 }
-let draftTimer = null, draftBusy = false, draftAgain = false;
-function draftRef(){ return caps.db && caps.uid ? caps.db.doc(`data/users/${caps.uid}/draft`) : null; }
-function queueDraft(){
-  if (!draftRef() || state.example) return;
-  clearTimeout(draftTimer);
-  draftTimer = setTimeout(writeDraft, 1500);   // one write per pause in typing
+const online = () => !!(caps.db && caps.uid);
+const wsPath = () => `data/users/${caps.uid}/workspace`;
+const draftPath = id => `${wsPath()}/drafts/${id}`;
+const pending = new Map();
+let flushTimer = null, flushing = false;
+function queueWrite(path, body){   // body() gives the document, or null to delete it
+  if (!online()) return;
+  pending.set(path, body);
+  clearTimeout(flushTimer); flushTimer = setTimeout(flush, 1500);   // one write per pause in typing
 }
-async function writeDraft(){
-  const ref = draftRef(); if (!ref) return;
-  if (draftBusy){ draftAgain = true; return; }
-  draftBusy = true;
-  try { await ref.set({state: JSON.parse(JSON.stringify(state)), updatedAt: state.updatedAt}); }
-  catch(e){ if (e && e.code === "invalid_argument") caps.uid = null; }   // cannot write here: stay browser-only
-  draftBusy = false;
-  if (draftAgain){ draftAgain = false; writeDraft(); }
+async function flush(){
+  if (flushing){ flushTimer = setTimeout(flush, 500); return; }
+  flushing = true;
+  const items = [...pending]; pending.clear();
+  for (const [path, body] of items){
+    const data = body();
+    try { if (data) await caps.db.doc(path).set(data); else await caps.db.doc(path).delete(); }
+    catch(e){ if (e && e.code === "invalid_argument"){ caps.uid = null; break; } }   // cannot write here: stay browser-only
+  }
+  flushing = false;
 }
-// A user edit: remember when, keep it in the browser, and sync it to the account when online.
-function touch(){ state.updatedAt = Date.now(); saveLocal(); queueDraft(); }
+const wsBody = () => ({companies: JSON.parse(JSON.stringify(ws.companies)), current: ws.current, updatedAt: ws.updatedAt});
+const draftBody = id => () => ws.drafts[id] ? JSON.parse(JSON.stringify(ws.drafts[id])) : null;
+// An edit to the open company's entries: remember when, keep it in the browser, sync it when online.
+function touch(){
+  state.updatedAt = Date.now(); saveLocal();
+  if (!state.example) queueWrite(draftPath(ws.current), draftBody(ws.current));
+}
+// An edit to the company list (added, renamed, removed, switched).
+function touchWs(){
+  ws.updatedAt = Date.now(); saveLocal();
+  if (!isExample()) queueWrite(wsPath(), wsBody);
+}
 
 // ---------------------------------------------------------------- amounts in the row
 const C = NLVAT.parseCents;
@@ -887,12 +951,86 @@ function renderReturn(){
   }
 }
 
+// ---------------------------------------------------------------- companies
+function renderCompanySelect(){
+  const sel = $("company-select");
+  sel.replaceChildren(...ws.companies.map(c => el("option", {value: c.id, textContent: companyLabel(c)})));
+  sel.value = ws.current;
+}
+function recCompanyId(r){
+  if (r.company_id && ws.companies.some(c => c.id === r.company_id)) return r.company_id;
+  const v = normVat(r.company && r.company.vat_number);
+  const c = v && ws.companies.find(x => normVat(x.vat_number) === v);
+  return c ? c.id : (r.company_id || null);
+}
+const recordsOf = id => Records.list.filter(r => recCompanyId(r) === id);
+function renderCompanies(){
+  const sec = $("companies");
+  sec.hidden = ws.companies.length < 2;
+  if (sec.hidden) return;
+  $("companies-count").textContent = `${ws.companies.length} companies`;
+  const t = $("t-companies");
+  t.replaceChildren(el("thead",{}, el("tr",{}, ...["Company","Period","Entries","Result","Status","Last filed",""].map((h, i) => el("th",{class: i === 3 ? "n" : "", textContent: h})))));
+  const body = el("tbody");
+  for (const c of ws.companies){
+    const d = ws.drafts[c.id] || blankDraft();
+    let rep = null;
+    try { rep = c.id === ws.current ? lastReport : NLVAT.calculate(payloadRows(d.rows), c, d.period); } catch(e){}
+    const att = rep ? rep.document_counts.review + rep.document_counts.blocked : 0;
+    const last = recordsOf(c.id).sort((a, b) => String(b.finalised_at).localeCompare(String(a.finalised_at)))[0];
+    const current = c.id === ws.current;
+    body.append(el("tr",{class: current ? "current" : ""},
+      el("td",{}, el("strong",{textContent: c.name || "Unnamed company"}), el("span",{class:"sub", textContent: c.vat_number || "no VAT number yet"})),
+      el("td",{textContent: d.period}),
+      el("td",{textContent: String(d.rows.length)}),
+      el("td",{class:"n", textContent: rep && d.rows.length ? `${{PAY:"Pay", REFUND:"Reclaim", NIL:"Nil"}[rep.result.direction]} ${eur(rep.result.amount_eur)}` : "–"}),
+      el("td",{textContent: !d.rows.length ? "No entries" : att ? `${att} to check` : "Ready to file", class: att ? "warnc" : (d.rows.length ? "okc" : "muted")}),
+      el("td",{textContent: last ? `${last.period.label} · ${last.filed_on ? longDate(last.filed_on) : "no date"}` : "–"}),
+      el("td",{}, current ? el("span",{class:"tag", textContent:"open"}) : el("button",{textContent:"Open", "data-company": c.id}))));
+  }
+  t.append(body);
+}
+function switchCompany(id){
+  if (id === ws.current) return;
+  ws.current = id; bind(); touchWs();
+  $("finalise-panel").hidden = true; $("copy-box").hidden = true;
+  init();
+}
+function addCompany(){
+  const c = blankCompany();
+  ws.companies.push(c); ws.drafts[c.id] = blankDraft(); ws.current = c.id; bind();
+  touchWs(); touch(); init();
+  $("c-name").focus();
+  showNotice("New company added. Fill in its name and VAT number.");
+}
+let deleteCompanyArmed = null;
+function deleteCompany(b){
+  const c = state.company, filed = recordsOf(c.id).length;
+  if (filed){
+    showNotice(`${c.name || "This company"} has ${filed} filed ${filed === 1 ? "return" : "returns"}. Delete ${filed === 1 ? "it" : "them"} in Filed returns first (use Export all records to keep a copy).`, true);
+    return;
+  }
+  if (!deleteCompanyArmed){
+    b.textContent = "Click again to delete this company and its entries"; b.classList.add("danger");
+    deleteCompanyArmed = setTimeout(() => { deleteCompanyArmed = null; b.textContent = "Delete company"; b.classList.remove("danger"); }, 4000);
+    return;
+  }
+  clearTimeout(deleteCompanyArmed); deleteCompanyArmed = null; b.textContent = "Delete company"; b.classList.remove("danger");
+  ws.companies = ws.companies.filter(x => x.id !== c.id);
+  delete ws.drafts[c.id];
+  queueWrite(draftPath(c.id), () => null);
+  if (!ws.companies.length){ const n = blankCompany(); ws.companies.push(n); ws.drafts[n.id] = blankDraft(); }
+  ws.current = ws.companies[0].id; bind(); touchWs(); init();
+  showNotice(`Deleted ${c.name || "the company"}.`);
+}
+
 // ---------------------------------------------------------------- calculate
 function payloadRows(rows = state.rows){ return rows.map(r => { const o = {id: r.id}; FIELDS.forEach(k => o[k] = r[k]); return o; }); }
 function calculate(){
   try { lastReport = NLVAT.calculate(payloadRows(), state.company, state.period); hideNotice(); }
   catch(e){ lastReport = null; showNotice(e.message, true); }
   renderResults();
+  renderCompanies();
   if (!$("finalise-panel").hidden && $("fin-done").hidden) renderFinaliseChecks();
 }
 let timer = null;
@@ -981,7 +1119,7 @@ function setupExportMode(){
 function snapshot(meta){
   const rep = lastReport;
   return {
-    id: meta.id, period: rep.period, company: rep.company, version: meta.version || 1,
+    id: meta.id, period: rep.period, company: rep.company, company_id: state.company.id, version: meta.version || 1,
     filed_on: meta.filed_on || null, reference: meta.reference || "", note: meta.note || "",
     finalised_at: meta.finalised_at || null,
     status: rep.status, result: rep.result, rubrics: rep.rubrics, icp_listing: rep.icp_listing,
@@ -1172,9 +1310,16 @@ const Records = {
 };
 let deleteArmed = {id: null, timer: null}, loadArmed = {id: null, timer: null};
 function renderRecords(){
-  const t = $("t-records"), list = Records.sorted();
+  renderRecordsTable();
+  renderCompanies();
+}
+function renderRecordsTable(){
+  const all = Records.sorted(), showAll = $("records-all").checked || ws.companies.length < 2;
+  const list = showAll ? all : all.filter(r => recCompanyId(r) === ws.current);
+  const t = $("t-records");
   t.replaceChildren();
-  $("records-count").textContent = list.length ? `${list.length} ${list.length === 1 ? "return" : "returns"}` : "";
+  $("records-all").closest("label").hidden = ws.companies.length < 2;
+  $("records-count").textContent = all.length ? (showAll ? `${all.length} ${all.length === 1 ? "return" : "returns"}` : `${list.length} of ${all.length}`) : "";
   $("records-where").textContent = Records.mode === "account"
     ? "Saved in your claude.ai account. Only you can see these records, on any device where you open this page signed in."
     : "Saved in this browser only. Clearing browser data removes them, so keep the PDFs and use Export all records as a backup.";
@@ -1183,7 +1328,9 @@ function renderRecords(){
     if (!list.length) return;
   }
   if (!list.length){
-    t.append(el("tbody",{}, el("tr",{}, el("td",{class:"empty", textContent:"No filed returns yet. When a return is complete, use Finalise return to save it here with a PDF."}))));
+    t.append(el("tbody",{}, el("tr",{}, el("td",{class:"empty", textContent: all.length
+      ? `No filed returns for ${state.company.name || "this company"} yet. Tick All companies to see the others.`
+      : "No filed returns yet. When a return is complete, use Finalise return to save it here with a PDF."}))));
     return;
   }
   t.append(el("thead",{}, el("tr",{}, ...["Period","Company","Filed on","Reference","Result","Documents",""].map((h, i) => el("th",{class: i === 4 ? "n" : "", textContent: h})))));
@@ -1236,7 +1383,9 @@ function finaliseProblems(){
   if (rep.document_counts.blocked) block.push(`${rep.document_counts.blocked} ${rep.document_counts.blocked === 1 ? "row is" : "rows are"} incomplete. Complete or delete them first.`);
   if (rep.document_counts.review) warn.push(`${rep.document_counts.review} ${rep.document_counts.review === 1 ? "row is" : "rows are"} flagged “check”.`);
   if (rep.document_counts.out_of_period) warn.push(`${rep.document_counts.out_of_period} ${rep.document_counts.out_of_period === 1 ? "row is" : "rows are"} dated outside ${rep.period.label} and will not count.`);
-  const earlier = Records.list.filter(r => r.period.label === rep.period.label && r.company.vat_number === rep.company.vat_number);
+  const earlier = recordsOf(ws.current).filter(r => r.period.label === rep.period.label);
+  if (ws.companies.some(c => c.id !== ws.current && normVat(c.vat_number) && normVat(c.vat_number) === rep.company.vat_number))
+    warn.push("Another company in your list has the same VAT number.");
   if (earlier.length) warn.push(`${rep.period.label} was already finalised ${earlier.length === 1 ? "once" : earlier.length + " times"}. This one is saved as version ${earlier.length + 1}; the earlier record stays.`);
   ok.push(`Result: ${{PAY:"to pay", REFUND:"to reclaim", NIL:"nil return"}[rep.result.direction]} ${eur(rep.result.amount_eur)}`);
   return {block, warn, ok};
@@ -1256,7 +1405,7 @@ let lastFiled = null;
 async function finalise(){
   const {block} = finaliseProblems();
   if (block.length) return renderFinaliseChecks();
-  const rep = lastReport, version = Records.list.filter(r => r.period.label === rep.period.label && r.company.vat_number === rep.company.vat_number).length + 1;
+  const rep = lastReport, version = recordsOf(ws.current).filter(r => r.period.label === rep.period.label).length + 1;
   const stamp = new Date();
   const rec = snapshot({
     id: `${rep.period.label}-v${version}-${stamp.getTime().toString(36)}`, version,
@@ -1286,12 +1435,19 @@ function importText(name, text){
     rows = Array.isArray(d) ? d : (d.rows || []);
     if (!Array.isArray(d)) settings = d;
   } else ({rows, errors} = NLVAT.rowsFromCsv(text));
-  if (state.example) state = emptyState();
-  rows = rows.map(r => Object.assign(blankRow(r.type || "purchase"), r, {id: newId()}));
-  if (settings){
-    if (settings.company) state.company = Object.assign({}, state.company, settings.company);
-    if (settings.period) state.period = settings.period;
+  if (state.example){ ws = freshWorkspace(); bind(); }
+  if (settings && settings.company){
+    // A saved file names its company: add the rows to that company, creating it when it is new.
+    const fields = {name: settings.company.name || "", vat_number: settings.company.vat_number || "", deductible_pct: settings.company.deductible_pct || "100"};
+    const v = normVat(fields.vat_number);
+    let c = v ? ws.companies.find(x => normVat(x.vat_number) === v) : null;
+    if (!c && !state.rows.length && !state.company.name && !state.company.vat_number){ c = state.company; Object.assign(c, fields); }
+    if (!c){ c = blankCompany(fields); ws.companies.push(c); ws.drafts[c.id] = blankDraft(); }
+    ws.current = c.id; bind();
+    if (settings.period && !state.rows.length) state.period = settings.period;
+    touchWs();
   }
+  rows = rows.map(r => Object.assign(blankRow(r.type || "purchase"), r, {id: newId()}));
   state.rows.push(...rows);
   touch(); init();
   showNotice(`Imported ${rows.length} ${rows.length === 1 ? "row" : "rows"} from ${name}.` + (errors.length ? " " + errors.join(" ") : ""));
@@ -1299,6 +1455,16 @@ function importText(name, text){
 async function importRecords(list, name){
   const known = new Set(Records.list.map(r => r.id));
   const fresh = list.filter(r => r && r.id && r.period && r.rubrics && Array.isArray(r.rows) && !known.has(r.id));
+  // Records of a company that is not in the list yet bring that company along.
+  for (const r of fresh){
+    if (recCompanyId(r) && ws.companies.some(c => c.id === recCompanyId(r))) continue;
+    if (isExample()){ ws = freshWorkspace(); ws.companies = []; ws.drafts = {}; }
+    const c = blankCompany({id: r.company_id || undefined, name: r.company.name || "", vat_number: r.company.vat_number || ""});
+    if (!c.id) c.id = blankCompany().id;
+    ws.companies.push(c); ws.drafts[c.id] = blankDraft();
+  }
+  if (!ws.companies.length){ const c = blankCompany(); ws.companies.push(c); ws.drafts[c.id] = blankDraft(); }
+  bind(); touchWs(); init();
   for (const r of fresh){
     try { await Records.save(r); } catch(e){ showNotice(`Stopped importing: ${e.message || e.code}`, true); return; }
   }
@@ -1317,8 +1483,10 @@ document.addEventListener("input", ev => {
   if (f.id === "fin-ack"){ renderFinaliseChecks(); return; }
   if (!id){
     const map = {"c-name": "name", "c-vat": "vat_number", "c-pct": "deductible_pct"};
-    if (map[f.id]) state.company[map[f.id]] = f.value;
+    if (map[f.id]){ state.company[map[f.id]] = f.value; touchWs(); renderCompanySelect(); renderRecordsTable(); }
     else if (f.id === "period") state.period = f.value;
+    else if (f.id === "company-select") return switchCompany(f.value);
+    else if (f.id === "records-all") return renderRecords();
     else return;
     schedule(); return;
   }
@@ -1358,10 +1526,17 @@ document.addEventListener("click", async ev => {
     state.rows.splice(i + 1, 0, Object.assign({}, state.rows[i], {id: newId(), net: "", vat: "", total: "", _vatLocked: false}));
     renderTables(); schedule();
   } else if (b.id === "start-empty"){
-    state = emptyState(); touch(); init();
+    ws = freshWorkspace(); bind(); touchWs(); touch(); init();
+  } else if (b.dataset.company){
+    switchCompany(b.dataset.company); window.scrollTo({top: 0, behavior: "smooth"});
+  } else if (b.id === "add-company"){
+    addCompany();
+  } else if (b.id === "delete-company"){
+    deleteCompany(b);
   } else if (b.id === "clear"){
     if (clearArmed){ clearTimeout(clearArmed); clearArmed = null; b.textContent = "Clear all"; b.classList.remove("danger");
-      state.rows = []; state.example = false; touch(); init(); return; }
+      if (state.example){ ws = freshWorkspace(); bind(); touchWs(); } else state.rows = [];
+      touch(); init(); return; }
     b.textContent = "Click again to remove all rows"; b.classList.add("danger");
     clearArmed = setTimeout(() => { clearArmed = null; b.textContent = "Clear all"; b.classList.remove("danger"); }, 4000);
   } else if (b.id === "open-export"){ $("export-panel").hidden = false; $("export-panel").scrollIntoView({behavior: "smooth", block: "nearest"}); }
@@ -1371,7 +1546,7 @@ document.addEventListener("click", async ev => {
   else if (b.id === "fin-save") finalise();
   else if (b.id === "fin-pdf"){ if (lastFiled) downloadPdf(lastFiled, false); }
   else if (b.id === "fin-next"){
-    state = Object.assign(emptyState(Object.assign({}, state.company)), {period: nextPeriod(state.period)});
+    state.period = nextPeriod(state.period); state.rows = []; state.example = false;
     $("finalise-panel").hidden = true; touch(); init();
     showNotice(`Started ${state.period}. The finalised return is in Filed returns below.`);
   }
@@ -1398,9 +1573,14 @@ document.addEventListener("click", async ev => {
     if (loadArmed.id !== d.recLoad) return armButton(loadArmed, d.recLoad);
     clearTimeout(loadArmed.timer); loadArmed.id = null;
     const r = Records.list.find(x => x.id === d.recLoad); if (!r) return;
-    state = {example: false, company: Object.assign({deductible_pct: "100"}, r.company), period: r.period.label,
-             rows: r.rows.map(x => Object.assign({}, x, {id: newId()})), updatedAt: Date.now()};
-    touch(); init(); window.scrollTo({top: 0, behavior: "smooth"});
+    let cid = recCompanyId(r);
+    if (!cid || !ws.companies.some(c => c.id === cid)){
+      const c = blankCompany({name: r.company.name || "", vat_number: r.company.vat_number || ""});
+      if (isExample()){ ws.companies = []; ws.drafts = {}; }
+      ws.companies.push(c); cid = c.id;
+    }
+    ws.drafts[cid] = {period: r.period.label, rows: r.rows.map(x => Object.assign({}, x, {id: newId()})), example: false, updatedAt: Date.now()};
+    ws.current = cid; bind(); touchWs(); touch(); init(); window.scrollTo({top: 0, behavior: "smooth"});
     showNotice(`Loaded the entries of the filed return ${r.period.label}${r.version > 1 ? " v" + r.version : ""}. Changes here do not change the filed record; finalise again to save a new version.`);
   } else if (b.id === "records-export"){
     const text = JSON.stringify({schema: "nl-btw-records/1", exported_at: new Date().toISOString(), filings: Records.sorted()}, null, 2);
@@ -1424,6 +1604,8 @@ $("records-import").addEventListener("change", async ev => {
 });
 
 function init(){
+  renderCompanySelect();
+  $("add-company").disabled = $("delete-company").disabled = isExample();
   $("c-name").value = state.company.name || "";
   $("c-vat").value = state.company.vat_number || "";
   $("c-pct").value = state.company.deductible_pct || "100";
@@ -1438,10 +1620,61 @@ function init(){
   setupExportMode();
   renderTables();
   calculate();
+  renderRecords();
   saveLocal();
 }
 
 // ---------------------------------------------------------------- claude.ai: account storage and file saving
+// Merge what the account holds with this browser: per company, the newer entries win;
+// companies known on only one side are kept.
+async function pullWorkspace(){
+  const ref = caps.db.doc(wsPath()), oldRef = caps.db.doc(`data/users/${caps.uid}/draft`);
+  const [wsSnap, draftsSnap, oldSnap] = await Promise.all([ref.get(), ref.collection("drafts").get(), oldRef.get()]);
+  const example = isExample();
+  const remote = wsSnap.exists ? wsSnap.data() : null;
+  const remoteDrafts = Object.fromEntries(draftsSnap.docs.map(d => [d.id, d.data()]));
+  let took = false;
+  if (example && (remote || oldSnap.exists)){ ws = {companies: [], current: null, drafts: {}, updatedAt: 0}; }
+  if (remote && Array.isArray(remote.companies)){
+    const remoteNewer = (remote.updatedAt || 0) > (ws.updatedAt || 0);
+    const byId = new Map(ws.companies.map(c => [c.id, c]));
+    for (const rc of remote.companies){
+      if (!byId.has(rc.id)){ ws.companies.push(Object.assign({}, rc)); took = true; }
+      else if (remoteNewer){ Object.assign(byId.get(rc.id), rc); took = true; }
+    }
+    if (remoteNewer && remote.current && ws.companies.some(c => c.id === remote.current)) ws.current = remote.current;
+    if (remoteNewer) ws.updatedAt = remote.updatedAt;
+  } else if (oldSnap.exists && oldSnap.data().state){
+    // The account holds entries saved before the page handled several companies.
+    const old = oldSnap.data().state, v = normVat(old.company && old.company.vat_number);
+    let c = v && ws.companies.find(x => normVat(x.vat_number) === v);
+    if (!c){ c = blankCompany(Object.assign({}, old.company)); ws.companies.push(c); }
+    const local = ws.drafts[c.id];
+    if (!local || (old.updatedAt || 0) > (local.updatedAt || 0)){
+      ws.drafts[c.id] = {period: old.period, rows: old.rows || [], example: false, updatedAt: old.updatedAt || Date.now()}; took = true;
+    }
+    if (!ws.current) ws.current = c.id;
+    oldRef.delete().catch(() => {});
+  }
+  for (const c of ws.companies){
+    const rd = remoteDrafts[c.id], ld = ws.drafts[c.id];
+    if (rd && (!ld || (rd.updatedAt || 0) > (ld.updatedAt || 0))){ ws.drafts[c.id] = JSON.parse(JSON.stringify(rd)); took = true; }
+  }
+  if (!ws.companies.length){ ws = example ? exampleWorkspace() : freshWorkspace(); }
+  if (!ws.current || !ws.companies.some(c => c.id === ws.current)) ws.current = ws.companies[0].id;
+  bind();
+  if (!isExample()){
+    // Send up whatever this browser has that the account lacks or holds older.
+    if (!remote || (ws.updatedAt || 0) >= (remote.updatedAt || 0) || ws.companies.length > remote.companies.length) queueWrite(wsPath(), wsBody);
+    for (const c of ws.companies){
+      const rd = remoteDrafts[c.id], ld = ws.drafts[c.id];
+      if (ld && !ld.example && (!rd || (ld.updatedAt || 0) > (rd.updatedAt || 0))) queueWrite(draftPath(c.id), draftBody(c.id));
+    }
+  }
+  saveLocal(); init();
+  if (took) showNotice("Loaded your latest entries from your account.");
+}
+
 async function connectViewer(){
   if (!(window.claude && typeof window.claude.use === "function")) return;   // opened as a local file
   const [db, user, downloads] = await Promise.all(["db", "user", "downloads"].map(n => window.claude.use(n).catch(() => null)));
@@ -1453,14 +1686,7 @@ async function connectViewer(){
     // Bring local records along the first time this person opens the page online.
     const localOnly = Records.list;
     Records.connect();
-    try {
-      const snap = await draftRef().get();
-      const remote = snap.exists ? snap.data() : null;
-      if (remote && remote.state && (remote.updatedAt || 0) > (state.updatedAt || 0)){
-        state = JSON.parse(JSON.stringify(remote.state)); init();
-        showNotice("Loaded your latest entries from your account.");
-      } else if (!state.example && state.rows.length){ queueDraft(); }
-    } catch(e){ /* stay with the browser copy */ }
+    try { await pullWorkspace(); } catch(e){ /* stay with the browser copy */ }
     let moved = 0;
     for (const r of localOnly){ try { await Records.coll().doc(r.id).set(r); moved++; } catch(e){ break; } }
     if (moved && moved === localOnly.length){ try { localStorage.removeItem(RECORDS_STORE); } catch(e){} }
@@ -1468,10 +1694,9 @@ async function connectViewer(){
   renderRecords();
 }
 
-load();
 Records.loadLocal();
+load();
 init();
-renderRecords();
 connectViewer();
 </script>
 </body>

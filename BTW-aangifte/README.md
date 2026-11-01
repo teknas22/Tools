@@ -6,6 +6,8 @@ Calculates the Dutch VAT return (btw-aangifte, rubrics 1a–5g) from the sales i
 
 Everything runs in your browser; nothing is sent anywhere.
 
+- **Several companies:** add as many as you need. Each has its own VAT number, period, entries and filed returns. **Your companies** gives an overview of all of them.
+
 - Rows show where they land in the return (1a, 3b, 4b, 5b…) and flag anything to check: a VAT amount that doesn't match the rate, a missing VAT ID on an EU sale, a date outside the period.
 - **Finalise return** saves a filed return with its entries, filing date and Belastingdienst reference, and gives a PDF for your records.
 - **Filed returns** lists every finalised return. You can download its PDF again, load its entries back, or export the whole archive as a backup.
