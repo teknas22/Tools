@@ -473,7 +473,7 @@ const NLVAT = (() => {
     txs.forEach((tx, i) => {
       if (tx.invoice_number && tx.total !== null){
         const key = [tx.direction, tx.counterparty.toLowerCase(), tx.invoice_number, String(tx.total)].join("\u0001");
-        if (seen.has(key)) tx.warn(`Possible duplicate of row ${seen.get(key) + 1} (same number, party and total)`);
+        if (seen.has(key)) tx.warn(`Possible duplicate: another row has invoice number ${tx.invoice_number} with the same party and total`);
         else seen.set(key, i);
       }
     });
@@ -855,7 +855,16 @@ function setValue(f, r, key){
   if (key === "vat_id" || key === "supply_type") f.disabled = r.region === "NL";
   if (key === "reverse_charge") f.disabled = r.region !== "NL";
 }
+// Entries are shown and kept newest date first, whatever order they were typed in.
+// A row without a date yet stays on top; rows of the same date keep their order.
+const byDateDesc = (a, b) => (b.date || "9999-99-99").localeCompare(a.date || "9999-99-99");
+function sortRows(){
+  const before = state.rows.map(r => r.id).join();
+  state.rows.sort(byDateDesc);
+  return before !== state.rows.map(r => r.id).join();
+}
 function renderTables(){
+  sortRows();
   for (const type of ["sales","purchase"]){
     const t = $("t-" + type), cols = COLS[type];
     t.replaceChildren();
@@ -1225,7 +1234,7 @@ async function buildPdf(rec, draft){
     {title: "Total", w: 19, align: "right"}, {title: "Goes to", w: 16}, {title: "5b", w: 13, align: "right"}];
   const notes = [];
   for (const [type, title] of [["sales", "Sales invoices"], ["purchase", "Purchase invoices and receipts"]]){
-    const rows = rec.rows.filter(r => r.type === type);
+    const rows = rec.rows.filter(r => r.type === type).sort(byDateDesc);
     heading(`${title} (${rows.length})`);
     if (!rows.length){ font(9, "normal", muted); doc.text("None.", M, y); y += 8; continue; }
     table(docCols, rows.map((r, i) => {
@@ -1471,7 +1480,7 @@ async function importRecords(list, name){
   showNotice(`Imported ${fresh.length} filed ${fresh.length === 1 ? "return" : "returns"} from ${name}` + (list.length > fresh.length ? ` (${list.length - fresh.length} already there).` : "."));
 }
 function blankRow(type){
-  const prev = [...state.rows].reverse().find(r => r.type === type);
+  const prev = state.rows.find(r => r.type === type && r.date);   // rows are kept newest first
   return {id: newId(), type, date: prev ? prev.date : "", number: "", counterparty: "", region: "NL", vat_id: "", supply_type: "services",
           rate: "21", net: "", vat: "", total: "", reverse_charge: false,
           deductible_pct: type === "purchase" ? (state.company.deductible_pct || "100") : "100", note: ""};
@@ -1506,6 +1515,18 @@ document.addEventListener("input", ev => {
 });
 document.addEventListener("focusout", ev => {
   const f = ev.target, k = f.dataset && f.dataset.k;
+  if (k === "date" && sortRows()){
+    saveLocal();
+    // Redraw once focus has settled, then put the cursor back in the field the person moved to.
+    setTimeout(() => {
+      const now = document.activeElement, to = now && now.dataset && now.dataset.id ? [now.dataset.id, now.dataset.k] : null;
+      renderTables();
+      const back = to && document.querySelector(`[data-id="${to[0]}"][data-k="${to[1]}"]`);
+      if (back) back.focus();
+      else { const row = document.querySelector(`[data-row="${f.dataset.id}"]`); if (row) row.scrollIntoView({block: "nearest"}); }
+    }, 0);
+    return;
+  }
   if (!["net","vat","total"].includes(k)) return;
   const r = state.rows.find(x => x.id === f.dataset.id), c = cents(r[k]);
   if (c !== null){ r[k] = NLVAT.fmt(c); f.value = r[k]; saveLocal(); }
@@ -1516,7 +1537,7 @@ document.addEventListener("click", async ev => {
   const d = b.dataset;
   if (d.add){
     if (state.example) return;   // the banner offers the way out of the example first
-    const r = blankRow(d.add); state.rows.push(r); renderTables(); schedule();
+    const r = blankRow(d.add); state.rows.unshift(r); renderTables(); schedule();
     const first = document.querySelector(`[data-id="${r.id}"][data-k="date"]`);
     if (first){ first.scrollIntoView({block: "center"}); first.focus(); }
   } else if (d.del){
