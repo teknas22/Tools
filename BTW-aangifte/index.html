@@ -1,0 +1,1478 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Btw-aangifte</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one working column. Summary first, then the two entry ledgers, then the return as filed. */
+:root{
+  --bg:#f5f7f6; --surface:#ffffff; --soft:#edf1ef; --line:#d9e0dd; --fg:#16201c; --muted:#5a6762;
+  --accent:#0f6b59; --accent-fg:#ffffff; --ok:#1d7a4c; --warn:#9a5600; --bad:#b3261e;
+  --font:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111514; --surface:#191e1c; --soft:#212825; --line:#2d3532; --fg:#e7ece9; --muted:#95a39d;
+  --accent:#5cc4a9; --accent-fg:#0b1714; --ok:#56c98d; --warn:#eaa443; --bad:#f2837a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111514; --surface:#191e1c; --soft:#212825; --line:#2d3532; --fg:#e7ece9; --muted:#95a39d;
+  --accent:#5cc4a9; --accent-fg:#0b1714; --ok:#56c98d; --warn:#eaa443; --bad:#f2837a; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 var(--font)}
+main{max-width:1440px;margin:0 auto;padding-block:20px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
+main>*{min-width:0}
+h1{margin:0;font-size:1.55rem;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+h2{margin:0;font-size:1.02rem;font-weight:650;text-wrap:balance}
+.muted{color:var(--muted)}.small{font-size:.8rem}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:6px 16px;flex-wrap:wrap}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;padding:14px}
+.settings label{display:grid;gap:4px;font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.settings input,.settings select{font-size:.95rem;text-transform:none;letter-spacing:0;font-weight:400;padding:7px 8px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.card{padding:12px 14px;display:grid;gap:2px}
+.card .lbl{font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.big{font-size:1.35rem;font-weight:700;font-variant-numeric:tabular-nums}
+.okc{color:var(--ok)}.warnc{color:var(--warn)}.badc{color:var(--bad)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar .grow{flex:1}
+input,select,button,textarea{font:inherit;color:var(--fg)}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 6px;min-width:0;width:100%}
+input:disabled,select:disabled{opacity:.35}
+input[type=checkbox]{width:auto;accent-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button,.btn{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 12px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button.danger{color:var(--bad);border-color:var(--bad)}
+button.icon{padding:3px 7px;font-weight:500}
+button:hover,.btn:hover{border-color:var(--muted)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.banner{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;padding:10px 14px;border:1px dashed var(--accent);border-radius:var(--radius);background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.banner p{margin:0;flex:1;min-width:220px}
+section.panel{overflow:hidden}
+.sechead{display:flex;justify-content:space-between;align-items:baseline;gap:6px 10px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{padding:5px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:.7rem;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);font-weight:600;white-space:nowrap;background:var(--soft)}
+td.n,th.n{text-align:right}
+td input.n{text-align:right;font-variant-numeric:tabular-nums}
+.w-date{min-width:128px}.w-no{min-width:95px}.w-party{min-width:150px}.w-reg{min-width:100px}.w-vatid{min-width:120px}
+.w-kind{min-width:92px}.w-rate{min-width:70px}.w-amt{min-width:100px}.w-pct{min-width:58px}.w-note{min-width:110px}.w-res{min-width:120px}
+.ratebox{display:flex;gap:4px}.ratebox input{width:52px}
+.chip{display:inline-block;font-size:.72rem;padding:1px 7px;border-radius:99px;border:1px solid var(--line);margin:0 3px 3px 0;white-space:nowrap;font-variant-numeric:tabular-nums}
+.chip.rub{background:var(--soft);border-color:transparent}
+.chip.review{color:var(--warn);border-color:var(--warn)}.chip.blocked{color:var(--bad);border-color:var(--bad)}.chip.out_of_period{color:var(--muted)}
+.msg{font-size:.75rem;color:var(--muted)}
+.msg.w{color:var(--warn)}
+tr.msgrow td{padding:0 8px 6px 34px}
+tr.has-msg td{border-bottom:0}
+tr.blocked td,tr.msgrow.blocked td{background:color-mix(in srgb,var(--bad) 7%,transparent)}
+tr.review td,tr.msgrow.review td{background:color-mix(in srgb,var(--warn) 7%,transparent)}
+tr.out_of_period td{opacity:.6}
+.empty{padding:18px 14px;color:var(--muted)}
+.hint{padding:10px 14px;font-size:.8rem;color:var(--muted);border-top:1px solid var(--line)}
+.ret td,.ret th{padding:7px 12px}.ret td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.ret td.code{font-weight:650;width:3.5em}
+.ret tr.sum td{font-weight:650;background:var(--soft)}.ret tr.zero td{color:var(--muted)}
+.ret tr.final td{font-size:1.05rem}
+.err{color:var(--bad);font-weight:600}
+.sheet{padding:14px;display:grid;gap:12px}
+.sheet .opt{display:grid;gap:6px;padding:12px;border:1px solid var(--line);border-radius:8px}
+.sheet .opt .row{display:flex;gap:8px;flex-wrap:wrap}
+.sheet textarea{min-height:110px;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.notice{padding:10px 14px;border-radius:8px;background:var(--soft)}
+footer{font-size:.8rem;color:var(--muted);display:grid;gap:4px}
+.addrow{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--line)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 14px;border-top:1px solid var(--line)}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.checks li{display:flex;gap:8px;align-items:baseline}
+.checks .mark{font-weight:700;width:1.1em;flex:none}
+.checks .ok .mark{color:var(--ok)}.checks .warn .mark{color:var(--warn)}.checks .bad .mark{color:var(--bad)}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.formgrid label,.ack{display:grid;gap:4px;font-size:.8rem;color:var(--muted);font-weight:600}
+.ack{display:flex;gap:8px;align-items:center;color:var(--fg);font-weight:500;font-size:.9rem}
+.done{display:grid;gap:10px;padding:12px;border-radius:8px;background:color-mix(in srgb,var(--ok) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--ok) 35%,var(--line))}
+.rec td{padding:8px 10px;vertical-align:middle}.rec td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rec .acts{display:flex;gap:6px;flex-wrap:wrap}
+.tag{display:inline-block;font-size:.7rem;padding:1px 7px;border-radius:99px;background:var(--soft);color:var(--muted);font-weight:600}
+.where{padding:10px 14px;font-size:.8rem;color:var(--muted);border-top:1px solid var(--line)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <h1>Btw-aangifte</h1>
+    <span class="muted small">Enter the invoices and receipts. The return updates as you type.</span>
+  </div>
+
+  <div class="panel settings">
+    <label for="c-name">Company name<input id="c-name" autocomplete="organization"></label>
+    <label for="c-vat">Company VAT number<input id="c-vat" placeholder="NL123456789B01"></label>
+    <label for="period">Period<select id="period"></select></label>
+    <label for="c-pct">Default deductible % (purchases)<input id="c-pct" inputmode="decimal"></label>
+  </div>
+
+  <div class="cards">
+    <div class="panel card"><span class="lbl" id="res-label">Result</span><span class="big" id="res-amount">–</span></div>
+    <div class="panel card"><span class="lbl">Status</span><span class="big" id="res-status">–</span></div>
+    <div class="panel card"><span class="lbl">VAT payable 5a / deductible 5b</span><span class="big" id="res-5ab">–</span></div>
+    <div class="panel card"><span class="lbl">File and pay by</span><span class="big" id="res-deadline">–</span></div>
+  </div>
+
+  <div id="example-banner" class="banner" hidden>
+    <p><strong>Example entries.</strong> These rows belong to a made-up company, Voorbeeld Consultancy B.V., and show how each kind of invoice lands in the return.</p>
+    <button class="primary" id="start-empty">Start with an empty return</button>
+  </div>
+
+  <div class="toolbar">
+    <button class="primary" data-add="sales">+ Sales invoice</button>
+    <button class="primary" data-add="purchase">+ Purchase invoice / receipt</button>
+    <span class="grow"></span>
+    <label class="btn" for="import-file">Import CSV or saved file<input type="file" id="import-file" accept=".csv,.txt,.json" hidden></label>
+    <button id="open-export">Save &amp; export</button>
+    <button id="open-finalise">Finalise return</button>
+    <button id="clear">Clear all</button>
+  </div>
+  <div id="notice" class="notice" hidden></div>
+
+  <section class="panel" id="export-panel" hidden>
+    <div class="sechead"><h2>Save &amp; export</h2><button class="icon" id="close-export" aria-label="Close">✕</button></div>
+    <div class="sheet">
+      <p class="muted small" id="export-mode"></p>
+      <div class="opt">
+        <strong>Your entries (CSV)</strong>
+        <span class="muted small">All rows as a CSV file. Import it again later, or open it in Excel.</span>
+        <div class="row"><button data-dl="csv">Download CSV</button><button data-copy="csv">Copy CSV</button><button data-dl="template">Download empty template</button></div>
+      </div>
+      <div class="opt">
+        <strong>Saved file (JSON)</strong>
+        <span class="muted small">Entries plus company and period settings, to reopen with “Import”.</span>
+        <div class="row"><button data-dl="json">Download file</button><button data-copy="json">Copy</button></div>
+      </div>
+      <div class="opt">
+        <strong>The return for your records</strong>
+        <span class="muted small">A PDF or an Excel workbook with the return, every document and the ICP listing. Building them needs an internet connection the first time. For the official record, use Finalise return.</span>
+        <div class="row"><button data-dl="pdf">Download draft PDF</button><button data-dl="xlsx">Download Excel</button><button data-copy="tsv">Copy return (paste into Excel)</button></div>
+      </div>
+      <textarea id="copy-box" readonly hidden aria-label="Copied text"></textarea>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="sechead"><h2>Sales invoices <span class="muted small">verkoopfacturen</span></h2><span class="muted small" id="sum-sales"></span></div>
+    <div class="scroll"><table id="t-sales"></table></div>
+    <div class="addrow"><button class="primary" data-add="sales">+ Sales invoice</button></div>
+  </section>
+
+  <section class="panel">
+    <div class="sechead"><h2>Purchase invoices &amp; receipts <span class="muted small">inkoopfacturen &amp; bonnen</span></h2><span class="muted small" id="sum-purchase"></span></div>
+    <div class="scroll"><table id="t-purchase"></table></div>
+    <div class="addrow"><button class="primary" data-add="purchase">+ Purchase invoice / receipt</button></div>
+    <div class="hint">For a supplier outside the Netherlands, or an invoice that says “btw verlegd”, leave VAT at 0. The rate is then the Dutch rate you charge yourself (2a / 4a / 4b). Fill in VAT only when the supplier charged foreign VAT; it is not deductible in this return. Restaurant and café bills: deductible 0.</div>
+  </section>
+
+  <section class="panel">
+    <div class="sechead"><h2>Aangifte omzetbelasting</h2><span class="muted small" id="ret-period"></span></div>
+    <div class="scroll"><table class="ret" id="t-return"></table></div>
+    <div id="icp"></div>
+    <div class="actions">
+      <button class="primary" id="open-finalise-2">Finalise return</button>
+      <button id="draft-pdf">Download draft PDF</button>
+      <span class="muted small">Finalising saves this return, with all its entries, to your filed returns below.</span>
+    </div>
+  </section>
+
+  <section class="panel" id="finalise-panel" hidden>
+    <div class="sechead"><h2 id="fin-title">Finalise return</h2><button class="icon" id="close-finalise" aria-label="Close">✕</button></div>
+    <div class="sheet">
+      <ul class="checks" id="fin-checks"></ul>
+      <label class="ack" id="fin-ack-row" for="fin-ack"><input type="checkbox" id="fin-ack"> I have checked the flagged rows and they are correct.</label>
+      <div class="formgrid">
+        <label for="fin-date">Filed on<input type="date" id="fin-date"></label>
+        <label for="fin-ref">Belastingdienst reference (kenmerk)<input id="fin-ref" placeholder="optional"></label>
+        <label for="fin-note">Note<input id="fin-note" placeholder="optional, e.g. paid on 28-10-2026"></label>
+      </div>
+      <div class="row"><button class="primary" id="fin-save">Finalise and save to filed returns</button></div>
+      <div class="done" id="fin-done" hidden>
+        <strong id="fin-done-text"></strong>
+        <div class="row"><button class="primary" id="fin-pdf">Download PDF</button><button id="fin-next">Start the next period</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="records">
+    <div class="sechead"><h2>Filed returns</h2><span class="muted small" id="records-count"></span></div>
+    <div class="scroll"><table class="rec" id="t-records"></table></div>
+    <div class="actions">
+      <button id="records-export">Export all records</button>
+      <label class="btn" for="records-import">Import records<input type="file" id="records-import" accept=".json" hidden></label>
+    </div>
+    <div class="where" id="records-where"></div>
+  </section>
+
+  <footer>
+    <span>Whole euros: turnover without cents, VAT payable rounded down, input VAT rounded up. The Belastingdienst allows rounding in your favour.</span>
+    <span>Everything runs in this page. Entries are kept in this browser only; use Save &amp; export to keep a copy. Check the result before you file it in Mijn Belastingdienst Zakelijk.</span>
+    <span id="server-link" hidden><a href="/upload">PDF upload (version 2 preview)</a></span>
+  </footer>
+</main>
+
+<script>
+// ENGINE START
+// Dutch VAT return engine for typed entries. Port of nlvat/manual.py + engine.py
+// allocation rules + report.py aggregation. Money is BigInt cents, rates and
+// percentages are BigInt scaled by 10^4, so results match the Python engine exactly.
+const NLVAT = (() => {
+  const EU = new Set(["AT","BE","BG","CY","CZ","DE","DK","EE","GR","ES","FI","FR","HR","HU","IE","IT","LT","LU","LV","MT","NL","PL","PT","RO","SE","SI","SK"]);
+  const VAT_ID_FORMATS = {AT:"U\\d{8}",BE:"[01]\\d{9}",BG:"\\d{9,10}",CY:"\\d{8}[A-Z]",CZ:"\\d{8,10}",DE:"\\d{9}",DK:"\\d{8}",EE:"\\d{9}",
+    EL:"\\d{9}",ES:"[A-Z0-9]\\d{7}[A-Z0-9]",FI:"\\d{8}",FR:"[A-HJ-NP-Z0-9]{2}\\d{9}",HR:"\\d{11}",HU:"\\d{8}",
+    IE:"\\d{7}[A-W][A-I]?|\\d[A-Z+*]\\d{5}[A-W]",IT:"\\d{11}",LT:"\\d{12}|\\d{9}",LU:"\\d{8}",LV:"\\d{11}",MT:"\\d{8}",
+    NL:"\\d{9}B\\d{2}",PL:"\\d{10}",PT:"\\d{9}",RO:"\\d{2,10}",SE:"\\d{10}01",SI:"\\d{8}",SK:"\\d{10}",XI:"\\d{12}|\\d{9}",
+    GB:"\\d{12}|\\d{9}",CHE:"\\d{9}(?:MWST|TVA|IVA)?"};
+  const VAT_ID_RE = new RegExp("^(?:" + Object.entries(VAT_ID_FORMATS).map(([k,v]) => `${k}(?:${v})`).join("|") + ")$");
+  const RUBRICS = {
+    "1a":"Leveringen/diensten belast met hoog tarief (21%)","1b":"Leveringen/diensten belast met laag tarief (9%)",
+    "1c":"Leveringen/diensten belast met overige tarieven, behalve 0%","1d":"Privégebruik",
+    "1e":"Leveringen/diensten belast met 0% of niet bij u belast","2a":"Leveringen/diensten waarbij de omzetbelasting naar u is verlegd",
+    "3a":"Leveringen naar landen buiten de EU (uitvoer)","3b":"Leveringen naar of diensten in landen binnen de EU",
+    "3c":"Installatie/afstandsverkopen binnen de EU","4a":"Leveringen/diensten uit landen buiten de EU",
+    "4b":"Leveringen/diensten uit landen binnen de EU","5a":"Verschuldigde omzetbelasting (subtotaal)","5b":"Voorbelasting",
+    "5c":"Subtotaal (5a min 5b)","5d":"Vermindering volgens de kleineondernemersregeling","5g":"Totaal te betalen / terug te vragen"};
+  const TURNOVER = ["1a","1b","1c","1d","1e","2a","3a","3b","3c","4a","4b"];
+  const VATR = ["1a","1b","1c","1d","2a","4a","4b"];
+  const SCALE = 10000n;            // rates and percentages: value * 10^4
+  const R21 = 210000n, R9 = 90000n;
+
+  // ---- numbers
+  const abs = x => x < 0n ? -x : x;
+  function divHalfUp(a, b){        // round half away from zero (Decimal ROUND_HALF_UP)
+    const neg = (a < 0n) !== (b < 0n), A = abs(a), B = abs(b);
+    const q = (2n*A + B) / (2n*B);
+    return neg ? -q : q;
+  }
+  function floorDiv(a, b){ const q = a / b; return (a % b !== 0n && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }
+  function ceilDiv(a, b){ return -floorDiv(-a, b); }
+
+  // Decimal text -> BigInt scaled by 10^places (exact), or null.
+  function scaled(s, places){
+    const m = /^(-?)(\d*)(?:\.(\d*))?$/.exec(s);
+    if (!m || (m[2] === "" && (m[3] || "") === "")) return null;
+    const frac = (m[3] || "");
+    const keep = frac.slice(0, places).padEnd(places, "0"), rest = frac.slice(places);
+    let v = BigInt((m[2] || "0") + keep);
+    if (rest && Number(rest[0]) >= 5) v += 1n;   // half up on the dropped digits
+    return m[1] ? -v : v;
+  }
+  // Same rules as nlvat.money.parse_amount; returns a normalised decimal string or null.
+  function normalizeAmount(text){
+    let s = String(text).trim().replace(/ /g," ");
+    s = s.replace(/(EUR|USD|GBP|CHF|€|\$|£)/gi, "").trim();
+    const neg = s.startsWith("-") || (s.startsWith("(") && s.endsWith(")"));
+    s = s.replace(/^[()\-+ ]+|[()\-+ ]+$/g, "");
+    if (s.endsWith(",-")) s = s.slice(0, -2);
+    s = s.replace(/ /g, "");
+    if (s.includes(",") && s.includes(".")){
+      const dec = s.lastIndexOf(",") > s.lastIndexOf(".") ? "," : ".";
+      const thou = dec === "," ? "." : ",";
+      s = s.split(thou).join("").replace(dec, ".");
+    } else if (s.includes(",")){
+      if (/^\d{1,3}(,\d{3})+$/.test(s)) s = s.replace(/,/g, "");
+      else { const i = s.lastIndexOf(","); s = s.slice(0, i).replace(/,/g, "") + "." + s.slice(i + 1); }
+    } else if ((s.match(/\./g) || []).length > 1 || /^\d{1,3}(\.\d{3})+$/.test(s)){
+      s = s.replace(/\./g, "");
+    }
+    if (!/^\d*(\.\d*)?$/.test(s) || s === "" || s === ".") return null;
+    return (neg ? "-" : "") + s;
+  }
+  function parseCents(text){
+    if (text === null || text === undefined || String(text).trim() === "") return null;
+    const n = normalizeAmount(text);
+    return n === null ? undefined : scaled(n, 2);
+  }
+  function parseScaled(text){         // rates / percentages
+    if (text === null || text === undefined || String(text).trim() === "") return null;
+    const n = normalizeAmount(text);
+    return n === null ? undefined : scaled(n, 4);
+  }
+  function fmt(c){ const s = c < 0n ? "-" : "", a = abs(c); return `${s}${a / 100n}.${String(a % 100n).padStart(2, "0")}`; }
+  function fmtRate(r){
+    const s = r < 0n ? "-" : "", a = abs(r), i = a / SCALE, f = String(a % SCALE).padStart(4, "0").replace(/0+$/, "");
+    return s + i + (f ? "." + f : "");
+  }
+  const vatOn = (base, rate) => divHalfUp(base * rate, 100n * SCALE);          // cents(base*rate/100)
+  const vatInTotal = (total, rate) => divHalfUp(total * rate, 100n * SCALE + rate);  // cents(total*rate/(100+rate))
+  const pctOf = (v, pct) => divHalfUp(v * pct, 100n * SCALE);
+
+  // ---- periods
+  const lastDay = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const iso = (y, m, d) => `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+  function parsePeriod(text){
+    const t = String(text || "").trim().toUpperCase().replace(/ /g, "");
+    let m = /^(\d{4})-?Q([1-4])$/.exec(t), y, q;
+    if (m){ y = +m[1]; q = +m[2]; }
+    else if ((m = /^Q([1-4])-?(\d{4})$/.exec(t))){ y = +m[2]; q = +m[1]; }
+    if (y){
+      const sm = 3*(q-1)+1;
+      return finish(`${y}-Q${q}`, y, sm, sm + 2);
+    }
+    m = /^(\d{4})-?(\d{2})$/.exec(t);
+    if (m && +m[2] >= 1 && +m[2] <= 12) return finish(`${m[1]}-${m[2]}`, +m[1], +m[2], +m[2]);
+    throw new Error(`Period must look like 2026-Q3 or 2026-07, got '${text}'`);
+    function finish(label, y, sm, em){
+      const ny = em === 12 ? y + 1 : y, nm = em === 12 ? 1 : em + 1;
+      return {label, start: iso(y, sm, 1), end: iso(y, em, lastDay(y, em)), deadline: iso(ny, nm, lastDay(ny, nm))};
+    }
+  }
+  function validIsoDate(s){
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    return !!m && +m[2] >= 1 && +m[2] <= 12 && +m[3] >= 1 && +m[3] <= lastDay(+m[1], +m[2]);
+  }
+
+  // ---- rows -> transactions (nlvat/manual.py row_to_tx)
+  function vatIdCountry(id){ if (id.startsWith("CHE")) return "CH"; const p = id.slice(0, 2); return {EL:"GR", XI:"GB-NI"}[p] || p; }
+  const FIELDS = ["type","date","number","counterparty","region","vat_id","supply_type","rate","net","vat","total","reverse_charge","deductible_pct","note"];
+
+  function rowToTx(i, row){
+    const tx = {file: String(row.id || `row-${i+1}`), status: "ok", messages: [], allocations: [], input_vat: 0n,
+                direction: row.type === "sales" || row.type === "purchase" ? row.type : "purchase",
+                invoice_number: String(row.number || "").trim() || null, counterparty: String(row.counterparty || "").trim(),
+                supply_type: row.supply_type === "goods" ? "goods" : "services", date: null,
+                counterparty_vat: null, country: "NL", net: null, vat: null, total: null, rate: null, deductible_pct: 100n*SCALE,
+                reverse_charge: false};
+    const warn = m => { tx.messages.push(m); if (tx.status === "ok") tx.status = "review"; };
+    const block = m => { tx.messages.push(m); tx.status = "blocked"; };
+    tx.warn = warn; tx.block = block;
+
+    const d = String(row.date || "").trim();
+    if (d){ if (validIsoDate(d)) tx.date = d; else block(`Date '${d}' is not valid (use YYYY-MM-DD)`); }
+    else block("Date is missing");
+
+    const region = String(row.region || "NL").toUpperCase();
+    const vatId = String(row.vat_id || "").toUpperCase().replace(/[\s.\-]/g, "") || null;
+    tx.counterparty_vat = vatId;
+    if (vatId && !VAT_ID_RE.test(vatId)) warn(`VAT ID ${vatId} does not look valid; check it in VIES`);
+    if (region === "NL") tx.country = "NL";
+    else if (region === "EU"){
+      const cc = vatId ? vatIdCountry(vatId) : "EU";
+      tx.country = cc !== "NL" ? cc : "EU";
+      if (vatId && cc === "NL") warn("Region is EU but the VAT ID is Dutch");
+    } else tx.country = "outside EU";
+
+    const num = (v, name, parser) => { const r = parser(v); if (r === undefined){ block(`${name} '${v}' is not a number`); return null; } return r; };
+    const rate = num(row.rate || "0", "Rate", parseScaled);
+    let net = num(row.net, "Net amount", parseCents), vat = num(row.vat, "VAT", parseCents), total = num(row.total, "Total", parseCents);
+    const pct = num(row.deductible_pct || "100", "Deductible %", parseScaled);
+    tx.deductible_pct = pct !== null ? pct : 100n*SCALE;
+    if (tx.status === "blocked") return tx;
+
+    tx.reverse_charge = region === "NL" ? !!row.reverse_charge && row.reverse_charge !== "false" : true;
+    if (net === null && total === null){ block("Enter the net amount or the total"); return tx; }
+    if (vat === null){
+      if (tx.reverse_charge) vat = 0n;
+      else if (net !== null) vat = vatOn(net, rate);
+      else vat = vatInTotal(total, rate);
+    }
+    if (net === null) net = total - vat;
+    if (total === null) total = net + vat;
+    if (abs(net + vat - total) > 2n) warn(`Net ${fmt(net)} + VAT ${fmt(vat)} does not equal total ${fmt(total)}`);
+    if (region === "NL" && vat !== 0n && abs(vatOn(net, rate) - vat) > 5n) warn(`VAT ${fmt(vat)} is not ${fmtRate(rate)}% of ${fmt(net)}; check the rate`);
+    if (region === "NL" && tx.reverse_charge && vat !== 0n) warn("Marked btw verlegd but VAT is filled in");
+    Object.assign(tx, {net, vat, total, rate});
+    if (row.note) tx.messages.push("Note: " + row.note);
+    return tx;
+  }
+
+  // ---- allocation (nlvat/engine.py allocate)
+  function allocate(tx, company){
+    if (tx.status === "blocked" || tx.status === "out_of_period") return;
+    const eu = tx.country === "EU" || (EU.has(tx.country) && tx.country !== "NL"), nl = tx.country === "NL";
+    const add = (rubric, base, vat, note) => tx.allocations.push({rubric, base, vat, note});
+    const rc = () => tx.rate ? tx.rate : company.reverse_charge_rate;
+    const pct = tx.deductible_pct;
+    if (tx.direction === "sales"){
+      if (tx.vat !== 0n){
+        const rub = tx.rate === R21 ? "1a" : tx.rate === R9 ? "1b" : "1c";
+        if (rub === "1c") tx.warn(`Sales VAT at rate ${fmtRate(tx.rate)}% is not a Dutch rate; put in 1c`);
+        add(rub, tx.net, tx.vat, `${fmtRate(tx.rate)}% NL VAT charged`);
+        if (!nl) tx.messages.push(`NL VAT charged to a ${tx.country} customer (B2C or no reverse charge)`);
+        return;
+      }
+      if (nl){
+        add("1e", tx.net, 0n, tx.reverse_charge ? "domestic reverse charge (btw verlegd)" : "0% / not taxed in NL");
+        if (!tx.reverse_charge) tx.warn("Domestic sale without VAT that is not marked as btw verlegd; check it");
+      } else if (eu){
+        add("3b", tx.net, 0n, `intra-EU ${tx.supply_type} to ${tx.country}`);
+        if (!tx.counterparty_vat) tx.warn("Intra-EU 0% sale without customer VAT ID; 0% needs a valid VAT ID (else NL VAT or 3c)");
+      } else if (tx.supply_type === "goods"){
+        add("3a", tx.net, 0n, `export of goods to ${tx.country}`);
+      } else {
+        tx.messages.push(`Services to a customer outside the EU (${tx.country}): place of supply outside NL, not reported in the return`);
+      }
+      return;
+    }
+    if (nl){
+      if (tx.vat !== 0n){ tx.input_vat = pctOf(tx.vat, pct); tx.messages.push(`Dutch input VAT, ${fmtRate(pct)}% deductible`); }
+      else if (tx.reverse_charge){
+        const r = rc(), v = vatOn(tx.net, r);
+        add("2a", tx.net, v, `btw verlegd to you, ${fmtRate(r)}%`); tx.input_vat += pctOf(v, pct);
+      } else tx.messages.push("No VAT on document (exempt or not taxed); nothing to report");
+      return;
+    }
+    if (tx.vat !== 0n){
+      tx.messages.push(`Foreign VAT charged by ${tx.country} supplier: not deductible in the Dutch return (reclaim through the EU VAT refund procedure or the foreign tax office)`);
+      if (["GB","US","CH"].includes(tx.country) || !eu) tx.warn("Foreign VAT on a non-EU supplier invoice; check whether it should be charged at all");
+      return;
+    }
+    if (eu){
+      const r = rc(), v = vatOn(tx.net, r);
+      add("4b", tx.net, v, `intra-EU ${tx.supply_type} from ${tx.country}, ${fmtRate(r)}%`); tx.input_vat += pctOf(v, pct);
+    } else if (tx.supply_type === "services"){
+      const r = rc(), v = vatOn(tx.net, r);
+      add("4a", tx.net, v, `services from ${tx.country}, ${fmtRate(r)}%`); tx.input_vat += pctOf(v, pct);
+    } else {
+      tx.warn(`Import of goods from ${tx.country}: import VAT is paid to customs (deduct via the customs/courier invoice) or reported in 4a with an article 23 permit`);
+    }
+  }
+
+  // ---- report (nlvat/report.py build_report)
+  function calculate(rows, companyIn, periodText){
+    const company = {name: (companyIn && companyIn.name) || "",
+                     vat_number: String((companyIn && companyIn.vat_number) || "").toUpperCase().replace(/[\s.\-]/g, ""),
+                     reverse_charge_rate: R21};
+    const period = parsePeriod(periodText);
+    const txs = rows.map((r, i) => rowToTx(i, r));
+    const seen = new Map();
+    txs.forEach((tx, i) => {
+      if (tx.invoice_number && tx.total !== null){
+        const key = [tx.direction, tx.counterparty.toLowerCase(), tx.invoice_number, String(tx.total)].join("\u0001");
+        if (seen.has(key)) tx.warn(`Possible duplicate of row ${seen.get(key) + 1} (same number, party and total)`);
+        else seen.set(key, i);
+      }
+    });
+    for (const tx of txs){
+      if (tx.date && (tx.status === "ok" || tx.status === "review") && !(period.start <= tx.date && tx.date <= period.end)){
+        tx.status = "out_of_period"; tx.messages.push(`Date ${tx.date} is outside ${period.label}; not counted`);
+      }
+      allocate(tx, company);
+    }
+    const exact = Object.fromEntries(TURNOVER.map(r => [r, {base: 0n, vat: 0n}]));
+    let input = 0n; const icp = new Map();
+    for (const tx of txs){
+      if (tx.status !== "ok" && tx.status !== "review") continue;
+      for (const a of tx.allocations){
+        exact[a.rubric].base += a.base; exact[a.rubric].vat += a.vat;
+        if (a.rubric === "3b"){
+          const k = (tx.counterparty_vat || "UNKNOWN") + "\u0001" + (tx.supply_type === "services" ? "services" : "goods");
+          icp.set(k, (icp.get(k) || 0n) + a.base);
+        }
+      }
+      input += tx.input_vat;
+    }
+    const rubrics = {};
+    for (const r of TURNOVER){
+      rubrics[r] = {label: RUBRICS[r], base_exact: fmt(exact[r].base), base: Number(exact[r].base / 100n)};
+      if (VATR.includes(r)){ rubrics[r].vat_exact = fmt(exact[r].vat); rubrics[r].vat = Number(floorDiv(exact[r].vat, 100n)); }
+    }
+    const r5a = VATR.reduce((s, r) => s + BigInt(rubrics[r].vat), 0n), r5b = ceilDiv(input, 100n), r5c = r5a - r5b, r5g = r5c;
+    rubrics["5a"] = {label: RUBRICS["5a"], vat: Number(r5a)};
+    rubrics["5b"] = {label: RUBRICS["5b"], vat_exact: fmt(input), vat: Number(r5b)};
+    rubrics["5c"] = {label: RUBRICS["5c"], vat: Number(r5c)};
+    rubrics["5d"] = {label: RUBRICS["5d"], vat: 0};
+    rubrics["5g"] = {label: RUBRICS["5g"], vat: Number(r5g)};
+    const counts = {ok: 0, review: 0, blocked: 0, out_of_period: 0, duplicate: 0, excluded: 0};
+    txs.forEach(t => counts[t.status]++);
+    return {
+      schema: "nl-btw-aangifte/1",
+      company: {name: company.name, vat_number: company.vat_number},
+      period: {label: period.label, start: period.start, end: period.end, filing_deadline: period.deadline},
+      status: counts.review === 0 && counts.blocked === 0 ? "READY_TO_FILE" : "REVIEW_REQUIRED",
+      result: {direction: r5g > 0n ? "PAY" : r5g < 0n ? "REFUND" : "NIL", amount_eur: Number(abs(r5g))},
+      rubrics,
+      icp_listing: [...icp.entries()].sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0).map(([k, v]) => {
+        const [id, type] = k.split("\u0001");
+        return {customer_vat: id, type, amount_exact: fmt(v), amount: Number(v / 100n)};
+      }),
+      document_counts: counts,
+      rounding: "Turnover: cents dropped. VAT payable: rounded down. Input VAT: rounded up (whole euros, in the filer's favour, as the Belastingdienst allows).",
+      transactions: txs.map(t => ({
+        file: t.file, status: t.status, direction: t.direction, date: t.date, invoice_number: t.invoice_number,
+        counterparty: t.counterparty, counterparty_vat: t.counterparty_vat, country: t.country, supply_type: t.supply_type,
+        reverse_charge: t.reverse_charge, net: t.net === null ? null : fmt(t.net), vat: t.vat === null ? null : fmt(t.vat),
+        total: t.total === null ? null : fmt(t.total), rate: t.rate === null ? null : fmtRate(t.rate),
+        deductible_pct: fmtRate(t.deductible_pct),
+        allocations: t.allocations.map(a => ({rubric: a.rubric, base: fmt(a.base), vat: fmt(a.vat), note: a.note})),
+        input_vat_5b: fmt(t.input_vat), messages: t.messages})),
+    };
+  }
+
+  // ---- CSV import (nlvat/manual.py rows_from_csv)
+  const ALIASES = {
+    type:["type","soort","direction","richting","sales/purchase","verkoop/inkoop"], date:["date","datum","factuurdatum","invoice date"],
+    number:["number","nummer","factuurnummer","invoice number","invoice no","factuurnr"],
+    counterparty:["counterparty","relatie","klant/leverancier","customer/supplier","name","naam"], region:["region","regio","land","country"],
+    vat_id:["vat_id","vat id","btw_id","btw-id","btw-nummer","btw nummer","vat number"], supply_type:["supply_type","goods/services","goederen/diensten","soort levering"],
+    rate:["rate","tarief","btw%","btw %","vat %","vat rate"], net:["net","netto","excl","excl. btw","bedrag excl","amount excl","value before vat"],
+    vat:["vat","btw","btw bedrag","vat amount"], total:["total","totaal","incl","incl. btw","bedrag incl","amount incl"],
+    reverse_charge:["reverse_charge","verlegd","btw verlegd","reverse charge"],
+    deductible_pct:["deductible_pct","aftrekbaar","aftrekbaar %","deductible %","deductible"], note:["note","notitie","omschrijving","description","opmerking"]};
+  const ALIAS = {}; for (const [k, al] of Object.entries(ALIASES)) for (const a of al) ALIAS[a] = k;
+  const TYPE_WORDS = {sales:"sales",verkoop:"sales",s:"sales",purchase:"purchase",purchases:"purchase",inkoop:"purchase",p:"purchase",
+                      receipt:"purchase",bon:"purchase",kosten:"purchase",expense:"purchase"};
+  const REGION_WORDS = {nl:"NL",nederland:"NL",netherlands:"NL",eu:"EU",non_eu:"NON_EU","non-eu":"NON_EU","outside eu":"NON_EU","buiten eu":"NON_EU","buiten de eu":"NON_EU"};
+  const TRUE_WORDS = new Set(["1","true","yes","ja","y","j","x","verlegd"]);
+  const MONTHS = {jan:1,januari:1,january:1,feb:2,februari:2,february:2,mrt:3,maart:3,mar:3,march:3,apr:4,april:4,mei:5,may:5,jun:6,juni:6,june:6,
+                  jul:7,juli:7,july:7,aug:8,augustus:8,august:8,sep:9,sept:9,september:9,okt:10,oct:10,oktober:10,october:10,nov:11,november:11,dec:12,december:12};
+  const MON = Object.keys(MONTHS).sort((a, b) => b.length - a.length).join("|");
+
+  function csvRecords(text, delim){
+    const out = []; let rec = [], f = "", q = false;
+    for (let i = 0; i < text.length; i++){
+      const c = text[i];
+      if (q){
+        if (c === '"'){ if (text[i+1] === '"'){ f += '"'; i++; } else q = false; }
+        else f += c;
+      } else if (c === '"') q = true;
+      else if (c === delim){ rec.push(f); f = ""; }
+      else if (c === "\n" || c === "\r"){
+        if (c === "\r" && text[i+1] === "\n") i++;
+        rec.push(f); out.push(rec); rec = []; f = "";
+      } else f += c;
+    }
+    if (f !== "" || rec.length) { rec.push(f); out.push(rec); }
+    return out;
+  }
+  function mkDate(y, m, d){
+    if (y < 100) y += 2000;
+    return m >= 1 && m <= 12 && d >= 1 && d <= lastDay(y, m) ? iso(y, m, d) : null;
+  }
+  function dateText(text){
+    text = String(text || "").trim();
+    if (!text) return "";
+    if (validIsoDate(text)) return text;
+    const pats = [
+      [/(?<!\d)(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)/g, g => mkDate(+g[1], +g[2], +g[3])],
+      [/(?<!\d)(\d{1,2})[-/.](\d{1,2})[-/.](\d{4}|\d{2})(?!\d)/g, g => +g[2] <= 12 ? mkDate(+g[3], +g[2], +g[1]) : mkDate(+g[3], +g[1], +g[2])],
+      [new RegExp(`(?<!\\d)(\\d{1,2})\\.?\\s+(${MON})\\.?,?\\s+(\\d{4})`, "gi"), g => mkDate(+g[3], MONTHS[g[2].toLowerCase()], +g[1])],
+      [new RegExp(`\\b(${MON})\\.?\\s+(\\d{1,2}),?\\s+(\\d{4})`, "gi"), g => mkDate(+g[3], MONTHS[g[1].toLowerCase()], +g[2])],
+    ];
+    const found = [];
+    for (const [rx, mk] of pats) for (const g of text.matchAll(rx)){ const d = mk(g); if (d) found.push([g.index, d]); }
+    found.sort((a, b) => a[0] - b[0]);
+    return found.length ? found[0][1] : text;
+  }
+  function amountText(t){
+    t = String(t || "").trim();
+    if (!t) return "";
+    const c = parseCents(t);
+    return c === undefined || c === null ? t : fmt(c);
+  }
+  function rowsFromCsv(text){
+    text = String(text).replace(/^﻿/, "");
+    const first = text.trim() ? text.split(/\r?\n/)[0] : "";
+    const cnt = ch => first.split(ch).length - 1;
+    const delim = cnt(";") > cnt(",") ? ";" : (first.includes("\t") ? "\t" : ",");
+    const recs = csvRecords(text, delim);
+    if (!recs.length) return {rows: [], errors: ["The CSV file is empty"]};
+    const header = recs[0], cols = header.map(h => ALIAS[h.trim().toLowerCase()] || null), errors = [];
+    const unknown = header.filter((h, i) => !cols[i] && h.trim());
+    if (unknown.length) errors.push(`Ignored unknown columns: ${unknown.join(", ")}`);
+    const rows = [];
+    recs.slice(1).forEach((rec, idx) => {
+      if (!rec.some(c => c.trim())) return;
+      const row = Object.fromEntries(FIELDS.map(k => [k, ""]));
+      cols.forEach((c, i) => { if (c && i < rec.length) row[c] = rec[i].trim(); });
+      row.type = TYPE_WORDS[row.type.toLowerCase()] || (row.type.toLowerCase() || "purchase");
+      row.region = REGION_WORDS[row.region.toLowerCase()] || (row.region.toUpperCase() || "NL");
+      if (!["NL","EU","NON_EU"].includes(row.region)) row.region = row.region === "NL" ? "NL" : (EU.has(row.region) ? "EU" : "NON_EU");
+      row.date = dateText(row.date);
+      row.rate = (row.rate || "21").replace(/%+$/, "").replace(/,/g, ".").trim();
+      for (const k of ["net","vat","total"]) row[k] = amountText(row[k]);
+      row.reverse_charge = TRUE_WORDS.has(row.reverse_charge.toLowerCase());
+      row.supply_type = ["goods","goederen","g"].includes(row.supply_type.toLowerCase()) ? "goods" : "services";
+      row.deductible_pct = row.deductible_pct.replace(/%+$/, "").trim() || "100";
+      row.id = `csv-${idx + 2}`;
+      rows.push(row);
+    });
+    return {rows, errors};
+  }
+
+  return {calculate, rowsFromCsv, parsePeriod, parseCents, parseScaled, fmt, vatOn, vatInTotal, FIELDS};
+})();
+if (typeof module !== "undefined") module.exports = NLVAT;
+// ENGINE END
+</script>
+
+<script>
+// ---------------------------------------------------------------- page
+const DEFAULTS = /*DEFAULTS*/{};
+const STORE = "nlvat-entries-v1", RECORDS_STORE = "nlvat-filings-v1";
+const FIELDS = NLVAT.FIELDS;
+const IN_FRAME = (() => { try { return window.self !== window.top; } catch(e){ return true; } })();
+const JSPDF_URL = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+const XLSX_URL = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+let state = null, lastReport = null, seq = 0;
+const caps = {db: null, uid: null, downloads: null};   // filled in when the claude.ai viewer grants them
+const $ = id => document.getElementById(id);
+const newId = () => "r" + Date.now().toString(36) + (seq++).toString(36);
+
+const EXAMPLE = {
+  company: {name: "Voorbeeld Consultancy B.V.", vat_number: "NL123456789B01", deductible_pct: "100"},
+  period: "2026-Q3",
+  csv: `type;date;number;counterparty;region;vat_id;supply_type;rate;net;vat;total;reverse_charge;deductible_pct;note
+sales;15-07-2026;S-2026-101;Klant Nederland B.V.;NL;NL987654321B01;services;21;10.000,00;2.100,00;12.100,00;;;
+sales;02-08-2026;S-2026-102;Boekhandel De Lezer;NL;NL111222333B01;services;21;1.000,00;210,00;1.210,00;;;training
+sales;02-08-2026;S-2026-102;Boekhandel De Lezer;NL;NL111222333B01;goods;9;500,00;45,00;545,00;;;boeken
+sales;20-08-2026;S-2026-103;Kunde GmbH;EU;DE123456789;services;21;5.000,00;0,00;5.000,00;;;
+sales;05-09-2026;S-2026-104;Client Inc.;NON_EU;;goods;0;2.000,00;0,00;2.000,00;;;export
+sales;10-09-2026;CN-2026-007;Klant Nederland B.V.;NL;NL987654321B01;services;21;-500,00;-105,00;-605,00;;;creditnota
+sales;25-09-2026;S-2026-106;Bouwbedrijf Hoogbouw B.V.;NL;NL444555666B01;services;21;3.000,00;0,00;3.000,00;ja;;
+purchase;12-07-2026;KT-88812;Kantoor Totaal B.V.;NL;NL222333444B01;goods;21;250,00;52,50;302,50;;100;
+purchase;01-08-2026;INV-IE-5521;Cloudsoft Ireland Ltd;EU;IE6388047V;services;21;100,00;0,00;100,00;;100;
+purchase;03-09-2026;US-90031;DevTools Inc.;NON_EU;;services;21;46,00;0,00;46,00;;100;USD 50 x 0,92
+purchase;18-09-2026;2026-044;Klusbedrijf Jansen;NL;NL555666777B01;services;21;1.200,00;0,00;1.200,00;ja;100;
+purchase;14-08-2026;H-77120;Hotel Adler Berlin;EU;DE811569869;services;7;200,00;14,00;214,00;;100;Duitse btw
+purchase;21-07-2026;;Supermarkt De Hoek;NL;;goods;9;12,17;1,10;13,27;;100;kassabon
+purchase;03-09-2026;;Restaurant De Gouden Lepel;NL;;services;9;42,02;3,78;45,80;;0;horeca`};
+
+function exampleState(){
+  const rows = NLVAT.rowsFromCsv(EXAMPLE.csv).rows.map(r => Object.assign(r, {id: newId()}));
+  return {example: true, company: Object.assign({}, EXAMPLE.company), period: EXAMPLE.period, rows, updatedAt: 0};
+}
+function emptyState(company){
+  return {example: false, period: defaultPeriod(), rows: [], updatedAt: Date.now(),
+          company: company || {name: DEFAULTS.name || "", vat_number: DEFAULTS.vat_number || "", deductible_pct: "100"}};
+}
+
+// ---------------------------------------------------------------- working entries: browser + (online) your account
+function saveLocal(){ try { localStorage.setItem(STORE, JSON.stringify(state)); } catch(e){} }
+function load(){
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE) || "null");
+    if (s && Array.isArray(s.rows)){ state = s; state.company = Object.assign({deductible_pct: "100"}, s.company); return; }
+  } catch(e){}
+  state = exampleState();
+}
+let draftTimer = null, draftBusy = false, draftAgain = false;
+function draftRef(){ return caps.db && caps.uid ? caps.db.doc(`data/users/${caps.uid}/draft`) : null; }
+function queueDraft(){
+  if (!draftRef() || state.example) return;
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(writeDraft, 1500);   // one write per pause in typing
+}
+async function writeDraft(){
+  const ref = draftRef(); if (!ref) return;
+  if (draftBusy){ draftAgain = true; return; }
+  draftBusy = true;
+  try { await ref.set({state: JSON.parse(JSON.stringify(state)), updatedAt: state.updatedAt}); }
+  catch(e){ if (e && e.code === "invalid_argument") caps.uid = null; }   // cannot write here: stay browser-only
+  draftBusy = false;
+  if (draftAgain){ draftAgain = false; writeDraft(); }
+}
+// A user edit: remember when, keep it in the browser, and sync it to the account when online.
+function touch(){ state.updatedAt = Date.now(); saveLocal(); queueDraft(); }
+
+// ---------------------------------------------------------------- amounts in the row
+const C = NLVAT.parseCents;
+const rateScaled = r => NLVAT.parseScaled(r.rate) || 0n;
+const cents = v => { const c = C(v); return c === undefined ? null : c; };
+const noVat = r => r.region !== "NL" || r.reverse_charge;
+
+function recalc(r, changed){
+  // Same formulas as the engine, so a filled-in row never disagrees with the return.
+  const rate = rateScaled(r), net = cents(r.net), tot = cents(r.total);
+  if (["rate","region","reverse_charge"].includes(changed)) r._vatLocked = false;
+  if (changed === "vat"){
+    r._vatLocked = true;
+    const v = cents(r.vat);
+    if (net !== null && v !== null) r.total = NLVAT.fmt(net + v);
+    return;
+  }
+  if (changed === "total"){
+    if (tot === null) return;
+    const v = (r._vatLocked && cents(r.vat) !== null) ? cents(r.vat) : (noVat(r) ? 0n : NLVAT.vatInTotal(tot, rate));
+    r.vat = NLVAT.fmt(v); r.net = NLVAT.fmt(tot - v);
+    return;
+  }
+  if (net !== null){
+    if (!r._vatLocked) r.vat = NLVAT.fmt(noVat(r) ? 0n : NLVAT.vatOn(net, rate));
+    r.total = NLVAT.fmt(net + (cents(r.vat) ?? 0n));
+  } else if (tot !== null) recalc(r, "total");
+}
+
+// ---------------------------------------------------------------- periods
+function periodOptions(){
+  const y = new Date().getFullYear(), opts = [];
+  for (let yr = y + 1; yr >= y - 3; yr--){
+    for (let q = 4; q >= 1; q--) opts.push([`${yr}-Q${q}`, `${yr} Q${q}`]);
+    for (let m = 12; m >= 1; m--) opts.push([`${yr}-${String(m).padStart(2,"0")}`, `${yr}-${String(m).padStart(2,"0")} (month)`]);
+  }
+  return opts;
+}
+function defaultPeriod(){
+  const now = new Date(); let q = Math.floor(now.getMonth()/3), y = now.getFullYear();
+  if (q === 0){ q = 4; y -= 1; }   // the last completed quarter
+  return `${y}-Q${q}`;
+}
+function nextPeriod(label){
+  let m = /^(\d{4})-Q([1-4])$/.exec(label);
+  if (m) return +m[2] === 4 ? `${+m[1] + 1}-Q1` : `${m[1]}-Q${+m[2] + 1}`;
+  m = /^(\d{4})-(\d{2})$/.exec(label);
+  if (m) return +m[2] === 12 ? `${+m[1] + 1}-01` : `${m[1]}-${String(+m[2] + 1).padStart(2, "0")}`;
+  return label;
+}
+const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+const longDate = iso => { if (!iso) return ""; const [y, m, d] = iso.slice(0, 10).split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("nl-NL", {day:"numeric", month:"long", year:"numeric"}); };
+
+// ---------------------------------------------------------------- rendering
+const COLS = {
+  sales: [["date","Date","w-date"],["number","Invoice no.","w-no"],["counterparty","Customer","w-party"],["region","Customer in","w-reg"],
+          ["vat_id","Customer VAT ID","w-vatid"],["supply_type","Goods / services","w-kind"],["rate","Rate","w-rate"],["net","Net (excl.)","w-amt n"],
+          ["vat","VAT","w-amt n"],["total","Total (incl.)","w-amt n"],["_res","Goes to","w-res"],["reverse_charge","Verlegd",""],["note","Note","w-note"]],
+  purchase: [["date","Date","w-date"],["number","Invoice no.","w-no"],["counterparty","Supplier","w-party"],["region","Supplier in","w-reg"],
+          ["vat_id","Supplier VAT ID","w-vatid"],["supply_type","Goods / services","w-kind"],["rate","Rate","w-rate"],["net","Net (excl.)","w-amt n"],
+          ["vat","VAT","w-amt n"],["total","Total (incl.)","w-amt n"],["_res","Goes to","w-res"],["reverse_charge","Verlegd",""],["deductible_pct","Deduct. %","w-pct"],["note","Note","w-note"]],
+};
+function el(tag, attrs = {}, ...kids){
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)){
+    if (k === "class") e.className = v;
+    else if (k.startsWith("data-") || k.startsWith("aria-")) e.setAttribute(k, v);
+    else e[k] = v;
+  }
+  for (const k of kids) e.append(k);
+  return e;
+}
+function field(r, key, cls){
+  const data = {"data-id": r.id, "data-k": key, "aria-label": key.replace("_", " ")};
+  let f;
+  if (key === "region"){
+    f = el("select", data);
+    [["NL","NL"],["EU","EU"],["NON_EU","Outside EU"]].forEach(([v,t]) => f.append(el("option",{value:v,textContent:t})));
+  } else if (key === "supply_type"){
+    f = el("select", data);
+    [["services","Services"],["goods","Goods"]].forEach(([v,t]) => f.append(el("option",{value:v,textContent:t})));
+  } else if (key === "rate"){
+    const sel = el("select", Object.assign({}, data, {"data-k": "rate_sel"}));
+    ["21","9","0"].forEach(v => sel.append(el("option",{value:v,textContent:v+"%"})));
+    sel.append(el("option",{value:"other",textContent:"other"}));
+    const other = el("input", Object.assign({}, data, {type:"text", inputMode:"decimal", placeholder:"%", "data-k":"rate"}));
+    const box = el("div",{class:"ratebox"}, sel, other);
+    setRate(box, r);
+    return el("td",{class:cls}, box);
+  } else if (key === "reverse_charge"){
+    f = el("input", Object.assign({type:"checkbox", title:"The invoice says “btw verlegd”"}, data));
+  } else if (key === "date"){
+    f = el("input", Object.assign({type:"date"}, data));
+  } else {
+    f = el("input", Object.assign({type:"text"}, data));
+    if (["net","vat","total","deductible_pct"].includes(key)){ f.inputMode = "decimal"; f.classList.add("n"); }
+  }
+  setValue(f, r, key);
+  return el("td",{class: cls.replace(" n","")}, f);
+}
+function setRate(box, r){
+  const sel = box.querySelector("select"), inp = box.querySelector("input");
+  const std = ["21","9","0"].includes(String(r.rate));
+  sel.value = std ? String(r.rate) : "other";
+  inp.hidden = std;
+  if (!std && document.activeElement !== inp) inp.value = r.rate;
+}
+function setValue(f, r, key){
+  if (key === "reverse_charge") f.checked = !!r.reverse_charge;
+  else f.value = r[key] ?? "";
+  if (key === "vat_id" || key === "supply_type") f.disabled = r.region === "NL";
+  if (key === "reverse_charge") f.disabled = r.region !== "NL";
+}
+function renderTables(){
+  for (const type of ["sales","purchase"]){
+    const t = $("t-" + type), cols = COLS[type];
+    t.replaceChildren();
+    t.append(el("thead",{}, el("tr",{}, el("th",{textContent:"#"}),
+      ...cols.map(([, label, cls]) => el("th",{class: cls.includes(" n") ? "n" : "", textContent: label})), el("th",{textContent:""}))));
+    const body = el("tbody"), rows = state.rows.filter(r => r.type === type);
+    if (!rows.length) body.append(el("tr",{}, el("td",{colSpan: cols.length + 2, class:"empty",
+      textContent: type === "sales" ? "No sales invoices yet. Add one, or import a CSV." : "No purchase invoices or receipts yet."})));
+    rows.forEach((r, i) => {
+      const tr = el("tr", {"data-row": r.id});
+      tr.append(el("td",{class:"muted small", textContent: String(i + 1)}));
+      cols.forEach(([k,, cls]) => tr.append(k === "_res" ? el("td",{class: cls, "data-res": r.id}) : field(r, k, cls)));
+      tr.append(el("td",{}, el("button",{class:"icon", title:"Copy row (for a second VAT rate on the same invoice)", textContent:"⧉", "data-dup": r.id, "aria-label":"Copy row"}),
+                            el("button",{class:"icon", title:"Delete row", textContent:"✕", "data-del": r.id, "aria-label":"Delete row"})));
+      body.append(tr);
+    });
+    t.append(body);
+  }
+  renderResults();
+}
+function syncRow(r, source){
+  document.querySelectorAll(`[data-id="${r.id}"]`).forEach(f => {
+    const k = f.dataset.k;
+    if (f === source) return;
+    if (k === "rate" || k === "rate_sel") setRate(f.closest(".ratebox"), r);
+    else setValue(f, r, k);
+  });
+}
+const STATUS_WORD = {review: "check", blocked: "incomplete", out_of_period: "other period"};
+function renderResults(){
+  const rep = lastReport, byId = {};
+  if (rep) rep.transactions.forEach(t => byId[t.file] = t);
+  for (const r of state.rows){
+    const cell = document.querySelector(`[data-res="${r.id}"]`), tr = document.querySelector(`[data-row="${r.id}"]`);
+    if (!cell) continue;
+    cell.replaceChildren(); tr.className = "";
+    const old = tr.nextElementSibling;
+    if (old && old.classList.contains("msgrow")) old.remove();
+    const t = byId[r.id];
+    if (!t) continue;
+    tr.className = t.status;
+    t.allocations.forEach(a => cell.append(el("span",{class:"chip rub", textContent: `${a.rubric} ${a.base}` + (Number(a.vat) ? ` / ${a.vat}` : "")})));
+    if (Number(t.input_vat_5b)) cell.append(el("span",{class:"chip rub", textContent: `5b ${t.input_vat_5b}`}));
+    if (!t.allocations.length && !Number(t.input_vat_5b) && t.status !== "blocked" && t.status !== "out_of_period")
+      cell.append(el("span",{class:"chip", textContent:"not in return"}));
+    if (t.status !== "ok") cell.append(el("span",{class:"chip " + t.status, textContent: STATUS_WORD[t.status] || t.status}));
+    const msgs = visibleMessages(t);
+    if (msgs.length){
+      const td = el("td",{colSpan: tr.children.length});
+      msgs.forEach(m => td.append(el("div",{class: "msg" + (t.status === "ok" ? "" : " w"), textContent: "↳ " + m})));
+      tr.classList.add("has-msg");
+      tr.after(el("tr",{class: "msgrow " + t.status}, td));
+    }
+  }
+  for (const type of ["sales","purchase"]){
+    const rows = state.rows.filter(r => r.type === type);
+    const sum = k => rows.reduce((s, r) => s + (cents(r[k]) ?? 0n), 0n);
+    $("sum-" + type).textContent = rows.length ? `${rows.length} ${rows.length === 1 ? "row" : "rows"} · net ${NLVAT.fmt(sum("net"))} · VAT ${NLVAT.fmt(sum("vat"))}` : "";
+  }
+  renderReturn();
+}
+const visibleMessages = t => t.messages.filter(m => !/^Note: /.test(m) && !/^Dutch input VAT, 100%/.test(m));
+const eur = n => "€ " + Number(n).toLocaleString("nl-NL");
+function renderReturn(){
+  const rep = lastReport, t = $("t-return"), icp = $("icp");
+  t.replaceChildren(); icp.replaceChildren();
+  const set = (id, text, cls) => { const e = $(id); e.textContent = text; e.className = "big " + (cls || ""); };
+  if (!rep){ ["res-amount","res-status","res-5ab","res-deadline"].forEach(i => set(i, "–")); return; }
+  const res = rep.result, c = rep.document_counts, attention = c.review + c.blocked;
+  $("res-label").textContent = {PAY:"To pay", REFUND:"To reclaim", NIL:"Nil return"}[res.direction];
+  set("res-amount", eur(res.amount_eur), res.direction === "REFUND" ? "okc" : "");
+  set("res-status", attention ? `${attention} to check` : (state.rows.length ? "Ready to file" : "No entries"), attention ? (c.blocked ? "badc" : "warnc") : "okc");
+  set("res-5ab", `${eur(rep.rubrics["5a"].vat)} / ${eur(rep.rubrics["5b"].vat)}`);
+  set("res-deadline", longDate(rep.period.filing_deadline));
+  $("ret-period").textContent = `${rep.period.label} · ${rep.period.start} to ${rep.period.end}`;
+  t.append(el("thead",{}, el("tr",{}, el("th",{textContent:"Rubriek"}), el("th",{textContent:"Omschrijving"}),
+    el("th",{class:"n", textContent:"Omzet"}), el("th",{class:"n", textContent:"Omzetbelasting"}))));
+  const body = el("tbody");
+  for (const [k, v] of Object.entries(rep.rubrics)){
+    const zero = !k.startsWith("5") && !Number(v.base ?? 0) && !Number(v.vat ?? 0);
+    body.append(el("tr",{class: (k.startsWith("5") ? "sum" : "") + (zero ? " zero" : "") + (k === "5g" ? " final" : "")},
+      el("td",{class:"code", textContent:k}), el("td",{textContent:v.label}),
+      el("td",{class:"n", textContent: v.base === undefined ? "" : eur(v.base)}),
+      el("td",{class:"n", textContent: v.vat === undefined ? "" : eur(v.vat)})));
+  }
+  t.append(body);
+  if (rep.icp_listing.length){
+    const it = el("table",{class:"ret"}), b = el("tbody");
+    it.append(el("thead",{}, el("tr",{}, el("th",{textContent:"ICP listing: customer VAT ID"}), el("th",{textContent:"Type"}), el("th",{class:"n", textContent:"Amount"}))));
+    rep.icp_listing.forEach(i => b.append(el("tr",{}, el("td",{textContent:i.customer_vat}), el("td",{textContent:i.type}), el("td",{class:"n", textContent:eur(i.amount)}))));
+    it.append(b);
+    icp.append(el("div",{class:"scroll", style:"border-top:1px solid var(--line)"}, it));
+  }
+}
+
+// ---------------------------------------------------------------- calculate
+function payloadRows(rows = state.rows){ return rows.map(r => { const o = {id: r.id}; FIELDS.forEach(k => o[k] = r[k]); return o; }); }
+function calculate(){
+  try { lastReport = NLVAT.calculate(payloadRows(), state.company, state.period); hideNotice(); }
+  catch(e){ lastReport = null; showNotice(e.message, true); }
+  renderResults();
+  if (!$("finalise-panel").hidden && $("fin-done").hidden) renderFinaliseChecks();
+}
+let timer = null;
+function schedule(){ touch(); clearTimeout(timer); timer = setTimeout(calculate, 120); }
+function showNotice(text, isErr){ const n = $("notice"); n.textContent = text; n.className = "notice" + (isErr ? " err" : ""); n.hidden = false; }
+function hideNotice(){ const n = $("notice"); if (n.classList.contains("err")) n.hidden = true; }
+
+// ---------------------------------------------------------------- files
+const canDownload = () => !!caps.downloads || !IN_FRAME;
+async function saveFile(name, data){
+  if (caps.downloads){
+    try { await caps.downloads.save({filename: name, data}); showNotice(`Saved ${name}.`); return true; }
+    catch(e){
+      if (e && e.code === "declined") return false;
+      showNotice(`Could not save ${name}: ${(e && e.message) || e}`, true); return false;
+    }
+  }
+  if (!IN_FRAME){
+    const blob = data instanceof Blob ? data : new Blob([data]);
+    const a = el("a", {href: URL.createObjectURL(blob), download: name});
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    return true;
+  }
+  showNotice("Saving files is not available in this view. Use the Copy buttons instead.", true);
+  return false;
+}
+async function copyText(text, label){
+  const box = $("copy-box");
+  try { await navigator.clipboard.writeText(text); showNotice(`${label} copied to the clipboard.`); box.hidden = true; }
+  catch(e){ box.value = text; box.hidden = false; box.focus(); box.select(); showNotice("Select the text below and copy it (Ctrl+C / ⌘C)."); }
+}
+function loadScript(url, global){
+  return new Promise((resolve, reject) => {
+    if (window[global]) return resolve(window[global]);
+    const s = el("script", {src: url});
+    s.onload = () => window[global] ? resolve(window[global]) : reject(new Error("library did not load"));
+    s.onerror = () => reject(new Error("offline"));
+    document.head.append(s);
+  });
+}
+function entriesCsv(rows){
+  const q = v => { v = v === true ? "ja" : v === false ? "" : String(v ?? ""); return /[;"\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; };
+  return [FIELDS.join(";"), ...rows.map(r => FIELDS.map(k => q(r[k])).join(";"))].join("\n") + "\n";
+}
+function savedJson(){ return JSON.stringify({company: state.company, period: state.period, rows: payloadRows()}, null, 2); }
+function returnTsv(){
+  const rep = lastReport; if (!rep) return "";
+  const lines = [[`Btw-aangifte ${rep.period.label}`, rep.company.name, rep.company.vat_number].join("\t"), ["Rubriek","Omschrijving","Omzet","Omzetbelasting"].join("\t")];
+  for (const [k, v] of Object.entries(rep.rubrics)) lines.push([k, v.label, v.base ?? "", v.vat ?? ""].join("\t"));
+  return lines.join("\n") + "\n";
+}
+async function exportXlsx(){
+  const rep = lastReport; if (!rep) return;
+  let X;
+  try { X = await loadScript(XLSX_URL, "XLSX"); }
+  catch(e){ showNotice("The Excel export needs an internet connection the first time. Use Download CSV instead; Excel opens that too.", true); return; }
+  const wb = X.utils.book_new();
+  const ret = [[`Btw-aangifte ${rep.period.label}`, rep.company.name, rep.company.vat_number], ["Status", rep.status],
+               ["Result", rep.result.direction, rep.result.amount_eur], ["File and pay by", rep.period.filing_deadline], [],
+               ["Rubriek","Omschrijving","Omzet (€)","Omzetbelasting (€)","Omzet exact","Btw exact"]];
+  for (const [k, v] of Object.entries(rep.rubrics)) ret.push([k, v.label, v.base ?? "", v.vat ?? "", v.base_exact ? Number(v.base_exact) : "", v.vat_exact ? Number(v.vat_exact) : ""]);
+  X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet(ret), "Aangifte");
+  const tx = [["#","Type","Status","Date","Invoice no.","Counterparty","VAT ID","Country","Rate","Net","VAT","Total","Goes to","Input VAT 5b","Deductible %","Messages"]];
+  rep.transactions.forEach((t, i) => tx.push([i + 1, t.direction, t.status, t.date, t.invoice_number, t.counterparty, t.counterparty_vat, t.country, t.rate,
+    t.net === null ? "" : Number(t.net), t.vat === null ? "" : Number(t.vat), t.total === null ? "" : Number(t.total),
+    t.allocations.map(a => `${a.rubric}: ${a.base} / ${a.vat}`).join("; "), Number(t.input_vat_5b), t.deductible_pct, t.messages.join(" | ")]));
+  X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet(tx), "Transactions");
+  const icp = [["Customer VAT ID","Type","Amount (€)","Amount exact"], ...rep.icp_listing.map(i => [i.customer_vat, i.type, i.amount, Number(i.amount_exact)])];
+  X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet(icp), "ICP");
+  const out = X.write(wb, {type: "array", bookType: "xlsx"});
+  await saveFile(`btw-aangifte-${rep.period.label}.xlsx`, new Blob([out]));
+}
+function setupExportMode(){
+  document.querySelectorAll("[data-dl]").forEach(b => b.hidden = !canDownload());
+  $("draft-pdf").hidden = !canDownload();
+  $("fin-pdf").hidden = !canDownload();
+  $("export-mode").textContent = canDownload()
+    ? (caps.downloads ? "You confirm each file before it is saved." : "Files are saved to your Downloads folder.")
+    : "Saving files is not available in this view, so copy instead. The CSV and saved file can be pasted into a text file and imported later.";
+}
+
+// ---------------------------------------------------------------- the record of one return (what is filed and archived)
+// A filed return keeps its own copy of the figures, so later changes to the
+// tool's rules never change a return that was already filed.
+function snapshot(meta){
+  const rep = lastReport;
+  return {
+    id: meta.id, period: rep.period, company: rep.company, version: meta.version || 1,
+    filed_on: meta.filed_on || null, reference: meta.reference || "", note: meta.note || "",
+    finalised_at: meta.finalised_at || null,
+    status: rep.status, result: rep.result, rubrics: rep.rubrics, icp_listing: rep.icp_listing,
+    document_counts: rep.document_counts, rounding: rep.rounding,
+    transactions: rep.transactions.map(t => ({file: t.file, status: t.status, allocations: t.allocations.map(a => ({rubric: a.rubric, base: a.base, vat: a.vat})),
+      input_vat_5b: t.input_vat_5b, messages: t.status === "ok" ? [] : visibleMessages(t)})),
+    rows: payloadRows(),
+  };
+}
+
+// ---------------------------------------------------------------- PDF
+const nlAmount = s => { if (s === null || s === undefined || s === "") return ""; const n = Number(s); return n.toLocaleString("nl-NL", {minimumFractionDigits: 2, maximumFractionDigits: 2}); };
+const nlEuro = n => "€ " + Number(n).toLocaleString("nl-NL");
+const REGION = {NL: "NL", EU: "EU", NON_EU: "non-EU"};
+
+async function buildPdf(rec, draft){
+  const {jsPDF} = await loadScript(JSPDF_URL, "jspdf");
+  const doc = new jsPDF({unit: "mm", format: "a4"});
+  const W = 210, M = 15, R = W - M, BOTTOM = 280;
+  const ink = [22, 32, 28], muted = [90, 103, 98], line = [217, 224, 221], soft = [237, 241, 239], accent = [15, 107, 89];
+  const stamp = draft ? [154, 86, 0] : accent;
+  let y = M;
+  const font = (size, style = "normal", color = ink) => { doc.setFont("helvetica", style); doc.setFontSize(size); doc.setTextColor(...color); };
+  const fit = (text, w) => { text = String(text ?? ""); if (doc.getTextWidth(text) <= w) return text; while (text && doc.getTextWidth(text + "…") > w) text = text.slice(0, -1); return text + "…"; };
+  const need = h => { if (y + h > BOTTOM){ doc.addPage(); y = M; return true; } return false; };
+
+  // header
+  font(18, "bold"); doc.text(`Btw-aangifte ${rec.period.label}`, M, y + 6);
+  font(10, "bold", stamp); doc.text(draft ? "DRAFT · NOT FILED" : "FINALISED", R, y + 6, {align: "right"});
+  y += 12;
+  font(10); doc.text(`${rec.company.name || "(company name missing)"}   ·   btw-id ${rec.company.vat_number || "(missing)"}`, M, y);
+  y += 5;
+  font(9, "normal", muted);
+  doc.text(`Period ${longDate(rec.period.start)} to ${longDate(rec.period.end)}   ·   File and pay by ${longDate(rec.period.filing_deadline)}`, M, y);
+  y += 4;
+  doc.setDrawColor(...accent); doc.setLineWidth(0.6); doc.line(M, y, R, y); y += 6;
+
+  // summary boxes
+  const res = rec.result;
+  const boxes = [
+    [{PAY: "To pay", REFUND: "To reclaim", NIL: "Nil return"}[res.direction], nlEuro(res.amount_eur)],
+    ["VAT payable (5a)", nlEuro(rec.rubrics["5a"].vat)],
+    ["Input VAT (5b)", nlEuro(rec.rubrics["5b"].vat)],
+    draft ? ["Status", rec.status === "READY_TO_FILE" ? "Ready to file" : "Needs checking"] : ["Filed on", rec.filed_on ? longDate(rec.filed_on) : "–"],
+  ];
+  const bw = (R - M - 3 * 4) / 4;
+  boxes.forEach(([label, value], i) => {
+    const x = M + i * (bw + 4);
+    doc.setFillColor(...soft); doc.roundedRect(x, y, bw, 16, 1.5, 1.5, "F");
+    font(7.5, "bold", muted); doc.text(label.toUpperCase(), x + 3, y + 5);
+    font(12, "bold"); doc.text(fit(value, bw - 6), x + 3, y + 12);
+  });
+  y += 21;
+  if (!draft){
+    font(9, "normal", muted);
+    const parts = [rec.reference ? `Belastingdienst reference: ${rec.reference}` : "", rec.version > 1 ? `Version ${rec.version} for this period` : "", rec.note ? `Note: ${rec.note}` : ""].filter(Boolean);
+    if (parts.length){ doc.splitTextToSize(parts.join("   ·   "), R - M).forEach(l => { doc.text(l, M, y); y += 4.2; }); y += 2; }
+  }
+
+  // generic table
+  function table(cols, rows, opts = {}){
+    const size = opts.size || 8.5, rh = opts.rh || 5.6;
+    const header = () => {
+      doc.setFillColor(...soft); doc.rect(M, y, R - M, rh, "F");
+      font(size - 1, "bold", muted);
+      let x = M;
+      cols.forEach(c => { const tx = c.align === "right" ? x + c.w - 1.5 : x + 1.5; doc.text(c.title.toUpperCase(), tx, y + rh - 1.7, {align: c.align === "right" ? "right" : "left"}); x += c.w; });
+      y += rh;
+    };
+    header();
+    rows.forEach(row => {
+      if (need(rh)) header();
+      font(size, row._bold ? "bold" : "normal", row._muted ? muted : ink);
+      if (row._fill){ doc.setFillColor(...soft); doc.rect(M, y, R - M, rh, "F"); }
+      let x = M;
+      cols.forEach((c, i) => {
+        const v = fit(row[i], c.w - 3);
+        if (c.align === "right") doc.text(v, x + c.w - 1.5, y + rh - 1.7, {align: "right"}); else doc.text(v, x + 1.5, y + rh - 1.7);
+        x += c.w;
+      });
+      doc.setDrawColor(...line); doc.setLineWidth(0.2); doc.line(M, y + rh, R, y + rh);
+      y += rh;
+    });
+    y += 5;
+  }
+  const heading = text => { need(14); font(11, "bold"); doc.text(text, M, y + 4); y += 7; };
+
+  heading("Aangifte omzetbelasting (whole euros)");
+  table([{title: "Rubriek", w: 17}, {title: "Omschrijving", w: 99}, {title: "Omzet", w: 30, align: "right"}, {title: "Omzetbelasting", w: 34, align: "right"}],
+    Object.entries(rec.rubrics).map(([k, v]) => Object.assign([k, v.label, v.base === undefined ? "" : nlEuro(v.base), v.vat === undefined ? "" : nlEuro(v.vat)],
+      {_bold: k.startsWith("5"), _fill: k === "5g", _muted: !k.startsWith("5") && !Number(v.base ?? 0) && !Number(v.vat ?? 0)})));
+
+  if (rec.icp_listing.length){
+    heading("Opgaaf intracommunautaire prestaties (ICP)");
+    table([{title: "Customer VAT ID", w: 80}, {title: "Type", w: 60}, {title: "Amount", w: 40, align: "right"}],
+      rec.icp_listing.map(i => [i.customer_vat, i.type === "services" ? "Diensten" : "Goederen", nlEuro(i.amount)]));
+  }
+
+  // documents
+  const txById = Object.fromEntries(rec.transactions.map(t => [t.file, t]));
+  const docCols = [{title: "#", w: 6}, {title: "Date", w: 17}, {title: "Invoice", w: 21}, {title: "Party", w: 33}, {title: "In", w: 10},
+    {title: "Rate", w: 10, align: "right"}, {title: "Net", w: 19, align: "right"}, {title: "VAT", w: 16, align: "right"},
+    {title: "Total", w: 19, align: "right"}, {title: "Goes to", w: 16}, {title: "5b", w: 13, align: "right"}];
+  const notes = [];
+  for (const [type, title] of [["sales", "Sales invoices"], ["purchase", "Purchase invoices and receipts"]]){
+    const rows = rec.rows.filter(r => r.type === type);
+    heading(`${title} (${rows.length})`);
+    if (!rows.length){ font(9, "normal", muted); doc.text("None.", M, y); y += 8; continue; }
+    table(docCols, rows.map((r, i) => {
+      const t = txById[r.id] || {allocations: [], input_vat_5b: "0.00", status: "ok", messages: []};
+      const goes = t.status === "out_of_period" ? "other period" : t.status === "blocked" ? "incomplete" : (t.allocations.map(a => a.rubric).join(", ") || (Number(t.input_vat_5b) ? "5b" : "–"));
+      if (t.messages && t.messages.length) notes.push([`${type === "sales" ? "Sales" : "Purchase"} #${i + 1}`, r.counterparty || r.number || "", t.messages]);
+      return Object.assign([i + 1, r.date, r.number, r.counterparty, REGION[r.region] || r.region, `${r.rate}%`, nlAmount(r.net), nlAmount(r.vat), nlAmount(r.total),
+        goes, Number(t.input_vat_5b) ? nlAmount(t.input_vat_5b) : ""], {_muted: t.status === "out_of_period"});
+    }), {size: 7.5, rh: 5.2});
+  }
+  if (notes.length){
+    heading("Notes on flagged documents");
+    notes.forEach(([where, who, msgs]) => msgs.forEach(m => {
+      const lines = doc.splitTextToSize(`${where}${who ? " (" + who + ")" : ""}: ${m}`, R - M);
+      need(lines.length * 4 + 1); font(8, "normal", ink);
+      lines.forEach(l => { doc.text(l, M, y + 3); y += 4; }); y += 1;
+    }));
+    y += 3;
+  }
+  need(12); font(8, "normal", muted);
+  doc.splitTextToSize(rec.rounding + " Amounts per document are in euros as entered.", R - M).forEach(l => { doc.text(l, M, y + 3); y += 4; });
+
+  // footer on every page
+  const pages = doc.getNumberOfPages();
+  const stampText = draft ? `Draft made ${new Date().toLocaleString("nl-NL")}` : `Record ${rec.id} · finalised ${new Date(rec.finalised_at).toLocaleString("nl-NL")}`;
+  for (let i = 1; i <= pages; i++){
+    doc.setPage(i); font(7.5, "normal", muted);
+    doc.setDrawColor(...line); doc.setLineWidth(0.2); doc.line(M, 287, R, 287);
+    doc.text(fit(`Btw-aangifte ${rec.period.label} · ${rec.company.name} · ${stampText}`, 150), M, 291);
+    doc.text(`Page ${i} of ${pages}`, R, 291, {align: "right"});
+  }
+  return doc.output("blob");
+}
+async function downloadPdf(rec, draft){
+  showNotice("Building the PDF…");
+  try {
+    const blob = await buildPdf(rec, draft);
+    const name = `btw-aangifte-${rec.period.label}${draft ? "-draft" : rec.version > 1 ? "-v" + rec.version : ""}.pdf`;
+    if (await saveFile(name, blob)) showNotice(`Saved ${name}.`);
+  } catch(e){
+    showNotice(e.message === "offline" ? "Building the PDF needs an internet connection the first time (to load the PDF library). Try again when online." : `Could not build the PDF: ${e.message}`, true);
+  }
+}
+
+// ---------------------------------------------------------------- filed returns
+const Records = {
+  list: [], mode: "local", loading: false, error: "", unsubscribe: null,
+  loadLocal(){
+    try { this.list = JSON.parse(localStorage.getItem(RECORDS_STORE) || "[]"); } catch(e){ this.list = []; }
+  },
+  saveLocal(){ try { localStorage.setItem(RECORDS_STORE, JSON.stringify(this.list)); return true; } catch(e){ return false; } },
+  coll(){ return caps.db.doc(`data/users/${caps.uid}/records`).collection("filings"); },
+  connect(){
+    // Online: the records live in this person's private part of the page's store.
+    this.mode = "account"; this.loading = true; this.error = "";
+    const timeout = setTimeout(() => { if (this.loading){ this.error = "Your filed returns can't be reached yet. They will appear when the connection is back."; renderRecords(); } }, 10000);
+    this.unsubscribe = this.coll().onSnapshot(snap => {
+      this.list = snap.docs.map(d => d.data());
+      if (!snap.metadata.fromCache){ this.loading = false; this.error = ""; clearTimeout(timeout); }
+      renderRecords();
+    }, err => {
+      clearTimeout(timeout); this.loading = false;
+      this.error = `Your filed returns could not be loaded (${err.code}).`; renderRecords();
+    });
+  },
+  async save(rec){
+    if (this.mode === "account"){
+      const body = JSON.parse(JSON.stringify(rec));
+      if (JSON.stringify(body).length > 250000) throw new Error("This return has too many rows to store online (limit about 256 KB). Download the PDF and use Export all records instead.");
+      await this.coll().doc(rec.id).set(body);
+      return;
+    }
+    this.list = this.list.filter(r => r.id !== rec.id).concat([rec]);
+    if (!this.saveLocal()) throw new Error("This browser refused to store the record. Download the PDF and use Export all records to keep it.");
+    renderRecords();
+  },
+  async remove(id){
+    if (this.mode === "account"){ await this.coll().doc(id).delete(); return; }
+    this.list = this.list.filter(r => r.id !== id); this.saveLocal(); renderRecords();
+  },
+  sorted(){ return [...this.list].sort((a, b) => (b.period.label + String(b.version).padStart(3, "0")).localeCompare(a.period.label + String(a.version).padStart(3, "0"))); },
+};
+let deleteArmed = {id: null, timer: null}, loadArmed = {id: null, timer: null};
+function renderRecords(){
+  const t = $("t-records"), list = Records.sorted();
+  t.replaceChildren();
+  $("records-count").textContent = list.length ? `${list.length} ${list.length === 1 ? "return" : "returns"}` : "";
+  $("records-where").textContent = Records.mode === "account"
+    ? "Saved in your claude.ai account. Only you can see these records, on any device where you open this page signed in."
+    : "Saved in this browser only. Clearing browser data removes them, so keep the PDFs and use Export all records as a backup.";
+  if (Records.error || (Records.loading && !list.length)){
+    t.append(el("tbody",{}, el("tr",{}, el("td",{class:"empty", textContent: Records.error || "Loading your filed returns…"}))));
+    if (!list.length) return;
+  }
+  if (!list.length){
+    t.append(el("tbody",{}, el("tr",{}, el("td",{class:"empty", textContent:"No filed returns yet. When a return is complete, use Finalise return to save it here with a PDF."}))));
+    return;
+  }
+  t.append(el("thead",{}, el("tr",{}, ...["Period","Company","Filed on","Reference","Result","Documents",""].map((h, i) => el("th",{class: i === 4 ? "n" : "", textContent: h})))));
+  const body = el("tbody");
+  for (const r of list){
+    const acts = el("div",{class:"acts"});
+    if (canDownload()) acts.append(el("button",{textContent:"PDF", "data-rec-pdf": r.id}));
+    acts.append(el("button",{textContent: loadArmed.id === r.id ? "Click again to replace your entries" : "Load entries", "data-rec-load": r.id, class: loadArmed.id === r.id ? "danger" : ""}));
+    acts.append(el("button",{textContent: deleteArmed.id === r.id ? "Click again to delete" : "Delete", "data-rec-del": r.id, class: deleteArmed.id === r.id ? "danger" : ""}));
+    const period = el("td",{}, el("strong",{textContent: r.period.label}));
+    if (r.version > 1) period.append(" ", el("span",{class:"tag", textContent: `v${r.version}`}));
+    body.append(el("tr",{},
+      period,
+      el("td",{textContent: r.company.name}),
+      el("td",{textContent: r.filed_on ? longDate(r.filed_on) : "–"}),
+      el("td",{textContent: r.reference || "–"}),
+      el("td",{class:"n", textContent: `${{PAY:"Pay", REFUND:"Reclaim", NIL:"Nil"}[r.result.direction]} ${nlEuro(r.result.amount_eur)}`}),
+      el("td",{textContent: String(r.rows.length)}),
+      el("td",{}, acts)));
+  }
+  t.append(body);
+}
+function armButton(slot, id){
+  clearTimeout(slot.timer);
+  slot.id = id;
+  slot.timer = setTimeout(() => { slot.id = null; renderRecords(); }, 4000);
+  renderRecords();
+}
+
+// ---------------------------------------------------------------- finalise
+function openFinalise(){
+  const p = $("finalise-panel");
+  p.hidden = false; $("fin-done").hidden = true; $("fin-save").hidden = false;
+  if (!$("fin-date").value) $("fin-date").value = todayIso();
+  $("fin-ack").checked = false;
+  renderFinaliseChecks();
+  p.scrollIntoView({behavior: "smooth", block: "start"});
+}
+function finaliseProblems(){
+  const rep = lastReport, out = [];
+  if (state.example) return {block: ["These are example entries. Start with an empty return to file your own."], warn: [], ok: []};
+  if (!rep) return {block: ["The return could not be calculated."], warn: [], ok: []};
+  const block = [], warn = [], ok = [];
+  if (Records.loading) block.push("Your filed returns are still loading. Wait a moment.");
+  if (!state.company.name.trim()) block.push("Fill in the company name."); else ok.push(`Company: ${state.company.name}`);
+  if (!/^NL\d{9}B\d{2}$/.test(rep.company.vat_number)) block.push("Fill in the company VAT number (NL + 9 digits + B + 2 digits).");
+  else ok.push(`VAT number: ${rep.company.vat_number}`);
+  const inPeriod = rep.transactions.filter(t => t.status !== "out_of_period").length;
+  if (!inPeriod) block.push(`There are no entries dated in ${rep.period.label}.`); else ok.push(`${inPeriod} documents in ${rep.period.label}`);
+  if (rep.document_counts.blocked) block.push(`${rep.document_counts.blocked} ${rep.document_counts.blocked === 1 ? "row is" : "rows are"} incomplete. Complete or delete them first.`);
+  if (rep.document_counts.review) warn.push(`${rep.document_counts.review} ${rep.document_counts.review === 1 ? "row is" : "rows are"} flagged “check”.`);
+  if (rep.document_counts.out_of_period) warn.push(`${rep.document_counts.out_of_period} ${rep.document_counts.out_of_period === 1 ? "row is" : "rows are"} dated outside ${rep.period.label} and will not count.`);
+  const earlier = Records.list.filter(r => r.period.label === rep.period.label && r.company.vat_number === rep.company.vat_number);
+  if (earlier.length) warn.push(`${rep.period.label} was already finalised ${earlier.length === 1 ? "once" : earlier.length + " times"}. This one is saved as version ${earlier.length + 1}; the earlier record stays.`);
+  ok.push(`Result: ${{PAY:"to pay", REFUND:"to reclaim", NIL:"nil return"}[rep.result.direction]} ${eur(rep.result.amount_eur)}`);
+  return {block, warn, ok};
+}
+function renderFinaliseChecks(){
+  const {block, warn, ok} = finaliseProblems(), ul = $("fin-checks");
+  $("fin-title").textContent = lastReport ? `Finalise return ${lastReport.period.label}` : "Finalise return";
+  ul.replaceChildren(
+    ...block.map(t => el("li",{class:"bad"}, el("span",{class:"mark", textContent:"✕"}), el("span",{textContent:t}))),
+    ...warn.map(t => el("li",{class:"warn"}, el("span",{class:"mark", textContent:"!"}), el("span",{textContent:t}))),
+    ...ok.map(t => el("li",{class:"ok"}, el("span",{class:"mark", textContent:"✓"}), el("span",{textContent:t}))));
+  const needAck = !!(lastReport && lastReport.document_counts.review);
+  $("fin-ack-row").hidden = !needAck;
+  $("fin-save").disabled = block.length > 0 || (needAck && !$("fin-ack").checked);
+}
+let lastFiled = null;
+async function finalise(){
+  const {block} = finaliseProblems();
+  if (block.length) return renderFinaliseChecks();
+  const rep = lastReport, version = Records.list.filter(r => r.period.label === rep.period.label && r.company.vat_number === rep.company.vat_number).length + 1;
+  const stamp = new Date();
+  const rec = snapshot({
+    id: `${rep.period.label}-v${version}-${stamp.getTime().toString(36)}`, version,
+    filed_on: $("fin-date").value || null, reference: $("fin-ref").value.trim(), note: $("fin-note").value.trim(),
+    finalised_at: stamp.toISOString(),
+  });
+  $("fin-save").disabled = true;
+  try { await Records.save(rec); }
+  catch(e){ $("fin-save").disabled = false; showNotice(e.message || `Could not save the record (${e.code}).`, true); return; }
+  lastFiled = rec;
+  $("fin-save").hidden = true;
+  $("fin-done").hidden = false;
+  $("fin-done-text").textContent = `Return ${rec.period.label} is saved to your filed returns${version > 1 ? ` as version ${version}` : ""}.` + (canDownload() ? " Download the PDF for your administration." : "");
+  $("fin-ref").value = ""; $("fin-note").value = "";
+}
+
+// ---------------------------------------------------------------- import
+function importText(name, text){
+  const trimmed = text.trim();
+  if (/^\{/.test(trimmed)){
+    const d = JSON.parse(trimmed);
+    if (Array.isArray(d.filings)) return importRecords(d.filings, name);
+  }
+  let rows = [], errors = [], settings = null;
+  if (/\.json$/i.test(name) || /^[{[]/.test(trimmed)){
+    const d = JSON.parse(trimmed);
+    rows = Array.isArray(d) ? d : (d.rows || []);
+    if (!Array.isArray(d)) settings = d;
+  } else ({rows, errors} = NLVAT.rowsFromCsv(text));
+  if (state.example) state = emptyState();
+  rows = rows.map(r => Object.assign(blankRow(r.type || "purchase"), r, {id: newId()}));
+  if (settings){
+    if (settings.company) state.company = Object.assign({}, state.company, settings.company);
+    if (settings.period) state.period = settings.period;
+  }
+  state.rows.push(...rows);
+  touch(); init();
+  showNotice(`Imported ${rows.length} ${rows.length === 1 ? "row" : "rows"} from ${name}.` + (errors.length ? " " + errors.join(" ") : ""));
+}
+async function importRecords(list, name){
+  const known = new Set(Records.list.map(r => r.id));
+  const fresh = list.filter(r => r && r.id && r.period && r.rubrics && Array.isArray(r.rows) && !known.has(r.id));
+  for (const r of fresh){
+    try { await Records.save(r); } catch(e){ showNotice(`Stopped importing: ${e.message || e.code}`, true); return; }
+  }
+  showNotice(`Imported ${fresh.length} filed ${fresh.length === 1 ? "return" : "returns"} from ${name}` + (list.length > fresh.length ? ` (${list.length - fresh.length} already there).` : "."));
+}
+function blankRow(type){
+  const prev = [...state.rows].reverse().find(r => r.type === type);
+  return {id: newId(), type, date: prev ? prev.date : "", number: "", counterparty: "", region: "NL", vat_id: "", supply_type: "services",
+          rate: "21", net: "", vat: "", total: "", reverse_charge: false,
+          deductible_pct: type === "purchase" ? (state.company.deductible_pct || "100") : "100", note: ""};
+}
+
+// ---------------------------------------------------------------- events
+document.addEventListener("input", ev => {
+  const f = ev.target, id = f.dataset.id;
+  if (f.id === "fin-ack"){ renderFinaliseChecks(); return; }
+  if (!id){
+    const map = {"c-name": "name", "c-vat": "vat_number", "c-pct": "deductible_pct"};
+    if (map[f.id]) state.company[map[f.id]] = f.value;
+    else if (f.id === "period") state.period = f.value;
+    else return;
+    schedule(); return;
+  }
+  const r = state.rows.find(x => x.id === id);
+  let k = f.dataset.k;
+  if (k === "rate_sel"){
+    k = "rate";
+    const box = f.closest(".ratebox"), inp = box.querySelector("input");
+    if (f.value === "other"){ inp.hidden = false; inp.value = ""; inp.focus(); return; }
+    r.rate = f.value; inp.hidden = true;
+  } else {
+    r[k] = f.type === "checkbox" ? f.checked : f.value;
+  }
+  if (["net","vat","total","rate","region","reverse_charge"].includes(k)) recalc(r, k);
+  syncRow(r, f);
+  schedule();
+});
+document.addEventListener("focusout", ev => {
+  const f = ev.target, k = f.dataset && f.dataset.k;
+  if (!["net","vat","total"].includes(k)) return;
+  const r = state.rows.find(x => x.id === f.dataset.id), c = cents(r[k]);
+  if (c !== null){ r[k] = NLVAT.fmt(c); f.value = r[k]; saveLocal(); }
+});
+let clearArmed = null;
+document.addEventListener("click", async ev => {
+  const b = ev.target.closest("button"); if (!b) return;
+  const d = b.dataset;
+  if (d.add){
+    if (state.example) return;   // the banner offers the way out of the example first
+    const r = blankRow(d.add); state.rows.push(r); renderTables(); schedule();
+    const first = document.querySelector(`[data-id="${r.id}"][data-k="date"]`);
+    if (first){ first.scrollIntoView({block: "center"}); first.focus(); }
+  } else if (d.del){
+    state.rows = state.rows.filter(r => r.id !== d.del); renderTables(); schedule();
+  } else if (d.dup){
+    const i = state.rows.findIndex(r => r.id === d.dup);
+    state.rows.splice(i + 1, 0, Object.assign({}, state.rows[i], {id: newId(), net: "", vat: "", total: "", _vatLocked: false}));
+    renderTables(); schedule();
+  } else if (b.id === "start-empty"){
+    state = emptyState(); touch(); init();
+  } else if (b.id === "clear"){
+    if (clearArmed){ clearTimeout(clearArmed); clearArmed = null; b.textContent = "Clear all"; b.classList.remove("danger");
+      state.rows = []; state.example = false; touch(); init(); return; }
+    b.textContent = "Click again to remove all rows"; b.classList.add("danger");
+    clearArmed = setTimeout(() => { clearArmed = null; b.textContent = "Clear all"; b.classList.remove("danger"); }, 4000);
+  } else if (b.id === "open-export"){ $("export-panel").hidden = false; $("export-panel").scrollIntoView({behavior: "smooth", block: "nearest"}); }
+  else if (b.id === "close-export"){ $("export-panel").hidden = true; $("copy-box").hidden = true; }
+  else if (b.id === "open-finalise" || b.id === "open-finalise-2") openFinalise();
+  else if (b.id === "close-finalise") $("finalise-panel").hidden = true;
+  else if (b.id === "fin-save") finalise();
+  else if (b.id === "fin-pdf"){ if (lastFiled) downloadPdf(lastFiled, false); }
+  else if (b.id === "fin-next"){
+    state = Object.assign(emptyState(Object.assign({}, state.company)), {period: nextPeriod(state.period)});
+    $("finalise-panel").hidden = true; touch(); init();
+    showNotice(`Started ${state.period}. The finalised return is in Filed returns below.`);
+  }
+  else if (b.id === "draft-pdf"){ if (lastReport) downloadPdf(snapshot({id: "draft"}), true); }
+  else if (d.dl){
+    const p = state.period;
+    if (d.dl === "csv") saveFile(`btw-invoer-${p}.csv`, "﻿" + entriesCsv(state.rows));
+    else if (d.dl === "template") saveFile("btw-invoer-template.csv", "﻿" + entriesCsv([]));
+    else if (d.dl === "json") saveFile(`btw-invoer-${p}.json`, savedJson());
+    else if (d.dl === "xlsx") exportXlsx();
+    else if (d.dl === "pdf" && lastReport) downloadPdf(snapshot({id: "draft"}), true);
+  } else if (d.copy){
+    if (d.copy === "csv") copyText(entriesCsv(state.rows), "Entries CSV");
+    else if (d.copy === "json") copyText(savedJson(), "Saved file");
+    else if (d.copy === "tsv") copyText(returnTsv(), "The return");
+  } else if (d.recPdf){
+    const r = Records.list.find(x => x.id === d.recPdf); if (r) downloadPdf(r, false);
+  } else if (d.recDel){
+    if (deleteArmed.id !== d.recDel) return armButton(deleteArmed, d.recDel);
+    clearTimeout(deleteArmed.timer); deleteArmed.id = null;
+    try { await Records.remove(d.recDel); showNotice("Filed return deleted."); } catch(e){ showNotice(`Could not delete it (${e.code || e.message}).`, true); }
+    renderRecords();
+  } else if (d.recLoad){
+    if (loadArmed.id !== d.recLoad) return armButton(loadArmed, d.recLoad);
+    clearTimeout(loadArmed.timer); loadArmed.id = null;
+    const r = Records.list.find(x => x.id === d.recLoad); if (!r) return;
+    state = {example: false, company: Object.assign({deductible_pct: "100"}, r.company), period: r.period.label,
+             rows: r.rows.map(x => Object.assign({}, x, {id: newId()})), updatedAt: Date.now()};
+    touch(); init(); window.scrollTo({top: 0, behavior: "smooth"});
+    showNotice(`Loaded the entries of the filed return ${r.period.label}${r.version > 1 ? " v" + r.version : ""}. Changes here do not change the filed record; finalise again to save a new version.`);
+  } else if (b.id === "records-export"){
+    const text = JSON.stringify({schema: "nl-btw-records/1", exported_at: new Date().toISOString(), filings: Records.sorted()}, null, 2);
+    if (canDownload()) saveFile(`btw-filed-returns-${todayIso()}.json`, text); else copyText(text, "All records");
+  }
+});
+$("import-file").addEventListener("change", async ev => {
+  const file = ev.target.files[0]; ev.target.value = "";
+  if (!file) return;
+  try { importText(file.name, await file.text()); }
+  catch(e){ showNotice(`Could not read ${file.name}: ${e.message}`, true); }
+});
+$("records-import").addEventListener("change", async ev => {
+  const file = ev.target.files[0]; ev.target.value = "";
+  if (!file) return;
+  try {
+    const d = JSON.parse(await file.text());
+    if (!Array.isArray(d.filings)) throw new Error("this is not an export of filed returns");
+    await importRecords(d.filings, file.name);
+  } catch(e){ showNotice(`Could not read ${file.name}: ${e.message}`, true); }
+});
+
+function init(){
+  $("c-name").value = state.company.name || "";
+  $("c-vat").value = state.company.vat_number || "";
+  $("c-pct").value = state.company.deductible_pct || "100";
+  const sel = $("period"), opts = periodOptions();
+  if (!state.period) state.period = defaultPeriod();
+  if (!opts.some(o => o[0] === state.period)) opts.unshift([state.period, state.period]);
+  sel.replaceChildren(...opts.map(([v, t]) => el("option", {value: v, textContent: t})));
+  sel.value = state.period;
+  $("example-banner").hidden = !state.example;
+  document.querySelectorAll("[data-add]").forEach(b => { b.disabled = !!state.example; b.title = state.example ? "Start with an empty return first" : ""; });
+  $("server-link").hidden = !DEFAULTS.server;
+  setupExportMode();
+  renderTables();
+  calculate();
+  saveLocal();
+}
+
+// ---------------------------------------------------------------- claude.ai: account storage and file saving
+async function connectViewer(){
+  if (!(window.claude && typeof window.claude.use === "function")) return;   // opened as a local file
+  const [db, user, downloads] = await Promise.all(["db", "user", "downloads"].map(n => window.claude.use(n).catch(() => null)));
+  caps.downloads = downloads;
+  setupExportMode();
+  const uid = user ? await user.id() : null;
+  if (db && uid){
+    caps.db = db; caps.uid = uid;
+    // Bring local records along the first time this person opens the page online.
+    const localOnly = Records.list;
+    Records.connect();
+    try {
+      const snap = await draftRef().get();
+      const remote = snap.exists ? snap.data() : null;
+      if (remote && remote.state && (remote.updatedAt || 0) > (state.updatedAt || 0)){
+        state = JSON.parse(JSON.stringify(remote.state)); init();
+        showNotice("Loaded your latest entries from your account.");
+      } else if (!state.example && state.rows.length){ queueDraft(); }
+    } catch(e){ /* stay with the browser copy */ }
+    let moved = 0;
+    for (const r of localOnly){ try { await Records.coll().doc(r.id).set(r); moved++; } catch(e){ break; } }
+    if (moved && moved === localOnly.length){ try { localStorage.removeItem(RECORDS_STORE); } catch(e){} }
+  }
+  renderRecords();
+}
+
+load();
+Records.loadLocal();
+init();
+renderRecords();
+connectViewer();
+</script>
+</body>
+</html>
