@@ -5,3 +5,4 @@ Small browser tools, published with GitHub Pages at https://teknas22.github.io/t
 | Tool | What it does |
 |---|---|
 | [BTW-aangifte](BTW-aangifte/) | Dutch VAT returns (btw-aangifte) for one or more companies, from typed invoices and receipts, with PDF records of filed returns |
+| [Invoice-tracker](Invoice-tracker/) | Track outgoing invoices: VAT, sent date, 30-day due date, paid status, and overdue reminders by e-mail / Teams. Runs locally with Python (`python invoice_tracker.py serve`), not on GitHub Pages |

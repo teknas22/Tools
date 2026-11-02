@@ -1,0 +1,5 @@
+config.ini
+*.db
+*.db-journal
+outbox.log
+__pycache__/

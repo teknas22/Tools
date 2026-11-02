@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoice Tracker</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --panel: #fff; --text: #1d2330; --muted: #6b7385; --line: #e2e5eb;
+    --accent: #1f5fbf; --accent-text: #fff; --danger: #c0352b; --danger-bg: #fdecea;
+    --ok: #1d7a46; --ok-bg: #e6f4ec; --warn: #9a6400; --warn-bg: #fff4dc; --draft-bg: #eef0f4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171c; --panel: #1c2027; --text: #e6e8ec; --muted: #9aa2b1; --line: #2c323c;
+      --accent: #5b9bff; --accent-text: #0b1220; --danger: #ff7b70; --danger-bg: #3a1c1a;
+      --ok: #5fd197; --ok-bg: #16301f; --warn: #f2c25b; --warn-bg: #352b14; --draft-bg: #262b33;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 16px 24px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  header h1 { margin: 0; font-size: 18px; }
+  header .sub { color: var(--muted); font-size: 12px; }
+  main { max-width: 1400px; margin: 0 auto; padding: 20px 16px 60px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .card .value { font-size: 22px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .card .hint { color: var(--muted); font-size: 12px; }
+  .card.danger .value { color: var(--danger); }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .toolbar .spacer { flex: 1; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tabs button { background: transparent; border: 1px solid var(--line); color: var(--text); }
+  .tabs button.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  button, .btn { font: inherit; cursor: pointer; border-radius: 7px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text); padding: 7px 12px; text-decoration: none; display: inline-block; }
+  button.secondary, .btn.secondary { background: var(--panel); color: var(--text); border-color: var(--line); }
+  button.small { padding: 3px 8px; font-size: 12px; }
+  button.danger { background: var(--panel); color: var(--danger); border-color: var(--line); }
+  input, select, textarea { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 7px; padding: 7px 9px; width: 100%; }
+  input[readonly] { background: var(--bg); }
+  input[type=checkbox] { width: auto; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; background: var(--panel); position: sticky; top: 0; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.overdue td { background: var(--danger-bg); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .badge.DRAFT { background: var(--draft-bg); color: var(--muted); }
+  .badge.SENT { background: var(--warn-bg); color: var(--warn); }
+  .badge.PAID { background: var(--ok-bg); color: var(--ok); }
+  .badge.OVERDUE { background: var(--danger); color: #fff; }
+  .muted { color: var(--muted); font-size: 12px; }
+  .actions { display: flex; gap: 4px; }
+  .empty { padding: 40px; text-align: center; color: var(--muted); }
+  dialog { border: 1px solid var(--line); border-radius: 12px; padding: 0; background: var(--panel); color: var(--text); width: min(760px, calc(100vw - 32px)); }
+  dialog::backdrop { background: rgba(0,0,0,.4); }
+  dialog form { padding: 20px; }
+  dialog h2 { margin: 0 0 14px; font-size: 17px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 14px; }
+  .grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+  .grid .full { grid-column: 1 / -1; }
+  fieldset { border: 1px solid var(--line); border-radius: 8px; margin: 14px 0 0; padding: 12px 14px; }
+  legend { font-size: 12px; color: var(--muted); padding: 0 6px; }
+  .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+  .err { color: var(--danger); min-height: 18px; margin-top: 8px; }
+  .check { flex-direction: row !important; align-items: center; gap: 8px !important; color: var(--text) !important; }
+  #toast { position: fixed; right: 16px; bottom: 16px; background: var(--text); color: var(--bg); padding: 10px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 420px; }
+  #toast.show { opacity: 1; }
+  details.log { margin-top: 18px; }
+  details.log summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }
+  .log-item { padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .log-item pre { white-space: pre-wrap; margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+  @media (max-width: 640px) { header { padding: 12px 16px; } th, td { padding: 8px 6px; } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1 id="title">Invoice Tracker</h1>
+    <div class="sub" id="subtitle">Outgoing invoices · payment terms · overdue reminders</div>
+  </div>
+  <div class="toolbar" style="margin:0">
+    <button class="secondary" id="btn-check" title="Run the overdue/reminder job now">Check reminders now</button>
+    <a class="btn secondary" href="/api/export.csv">Export CSV</a>
+    <button id="btn-new">+ New invoice</button>
+  </div>
+</header>
+
+<main>
+  <section class="cards">
+    <div class="card"><div class="label">Outstanding (incl. VAT)</div><div class="value" id="s-open">–</div><div class="hint" id="s-open-n"></div></div>
+    <div class="card danger"><div class="label">Overdue</div><div class="value" id="s-overdue">–</div><div class="hint" id="s-overdue-n"></div></div>
+    <div class="card"><div class="label">Received this month</div><div class="value" id="s-paid">–</div><div class="hint">payments registered</div></div>
+    <div class="card"><div class="label">VAT in outstanding</div><div class="value" id="s-vat">–</div><div class="hint" id="s-draft"></div></div>
+  </section>
+
+  <div class="toolbar">
+    <div class="tabs" id="tabs">
+      <button data-f="" class="active">All</button>
+      <button data-f="OPEN">Open</button>
+      <button data-f="OVERDUE">Overdue</button>
+      <button data-f="DRAFT">Draft</button>
+      <button data-f="PAID">Paid</button>
+    </div>
+    <div class="spacer"></div>
+    <input id="search" type="search" placeholder="Search number, customer, notes…" style="max-width:280px">
+  </div>
+
+  <div class="panel table-wrap">
+    <table>
+      <thead><tr>
+        <th>Invoice #</th><th>Customer / supplier</th><th>Invoice date</th>
+        <th class="num">Net</th><th class="num">VAT %</th><th class="num">VAT</th><th class="num">Total</th>
+        <th>Sent</th><th>Due</th><th>Status</th><th>Received</th><th>Reminders</th><th></th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden>No invoices yet. Click <b>+ New invoice</b> to add one.</div>
+  </div>
+
+  <details class="log panel" style="padding:12px 4px 4px" id="log-panel">
+    <summary style="padding:0 12px">Reminder &amp; notification log <span class="muted" id="channels"></span></summary>
+    <div id="log"></div>
+  </details>
+</main>
+
+<!-- Create / edit dialog -->
+<dialog id="dlg-inv">
+  <form id="f-inv" method="dialog" novalidate>
+    <h2 id="dlg-title">New invoice</h2>
+    <div class="grid">
+      <label>Invoice number *<input name="invoice_number" required></label>
+      <label>Customer / supplier *<input name="customer" required></label>
+      <label>Contact e-mail<input name="contact_email" type="email" placeholder="crediteuren@klant.nl"></label>
+      <label>Invoice date *<input name="invoice_date" type="date" required></label>
+    </div>
+    <fieldset><legend>Amounts (EUR)</legend>
+      <div class="grid">
+        <label>Net amount (excl. VAT) *<input name="net_amount" inputmode="decimal" placeholder="1.000,00" required></label>
+        <label>VAT percentage
+          <select name="vat_rate_sel">
+            <option value="21">21% – standard rate</option>
+            <option value="9">9% – reduced rate</option>
+            <option value="0">0% – zero / reverse-charge / exempt</option>
+            <option value="custom">Other…</option>
+          </select>
+        </label>
+        <label id="custom-rate-wrap" hidden>Custom VAT %<input name="vat_rate_custom" inputmode="decimal"></label>
+        <label>VAT amount<input name="vat_amount" readonly tabindex="-1"></label>
+        <label>Amount after tax<input name="gross_amount" readonly tabindex="-1"></label>
+      </div>
+    </fieldset>
+    <fieldset><legend>Sending &amp; payment terms</legend>
+      <div class="grid">
+        <label>Date sent to customer<input name="sent_date" type="date"></label>
+        <label>Payment terms (days)<input name="payment_terms_days" type="number" min="0" max="365"></label>
+        <label>Due date<input name="due_date" type="date"><span class="muted">Auto: sent date + terms (editable)</span></label>
+        <label>Status
+          <select name="status">
+            <option value="DRAFT">Draft – not sent yet</option>
+            <option value="SENT">Sent – awaiting payment</option>
+            <option value="PAID">Paid – payment received</option>
+          </select>
+        </label>
+        <label class="paid-only">Payment received on<input name="paid_date" type="date"></label>
+      </div>
+    </fieldset>
+    <fieldset><legend>Reminders</legend>
+      <div class="grid">
+        <label class="check"><input type="checkbox" name="reminders_enabled" checked> Send a message when the due date is breached</label>
+        <label>Personal reminder on (optional)<input name="reminder_date" type="date"></label>
+        <label class="full">Notes<textarea name="notes" rows="2" placeholder="PO number, contact person, agreements…"></textarea></label>
+      </div>
+    </fieldset>
+    <div class="err" id="inv-err"></div>
+    <div class="form-actions">
+      <button type="button" class="secondary" data-close>Cancel</button>
+      <button type="submit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Mark as paid dialog -->
+<dialog id="dlg-paid" style="width:min(420px, calc(100vw - 32px))">
+  <form id="f-paid" method="dialog" novalidate>
+    <h2>Register payment</h2>
+    <p class="muted" id="paid-info"></p>
+    <div class="grid">
+      <label>Received on<input name="paid_date" type="date" required></label>
+    </div>
+    <div class="err" id="paid-err"></div>
+    <div class="form-actions">
+      <button type="button" class="secondary" data-close>Cancel</button>
+      <button type="submit">Mark as paid</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast"></div>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const eur = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" });
+const money = v => v == null || v === "" ? "–" : eur.format(Number(v));
+const fmtDate = s => s ? s.split("-").reverse().join("-") : "–";     // DD-MM-YYYY
+const today = () => new Date().toISOString().slice(0, 10);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let CFG = { default_payment_terms_days: 30, default_vat_rate: "21" };
+let invoices = [], filter = "", editingId = null, payingId = null;
+
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 3500); }
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+
+// Parse "1.234,56" / "1234.56" / "1234,56" -> Number
+function parseAmount(s) {
+  s = String(s ?? "").replace(/[\s€]/g, "");
+  if (!s) return NaN;
+  if (s.includes(",") && s.includes(".")) s = s.lastIndexOf(",") > s.lastIndexOf(".") ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  else if (s.includes(",")) s = s.replace(",", ".");
+  else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");   // 8.000 -> 8000 (Dutch thousands)
+  return Number(s);
+}
+const round2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
+const addDays = (iso, d) => { const dt = new Date(iso + "T00:00:00Z"); dt.setUTCDate(dt.getUTCDate() + Number(d)); return dt.toISOString().slice(0, 10); };
+
+async function loadAll() {
+  const q = $("#search").value.trim();
+  const params = new URLSearchParams(); if (filter) params.set("status", filter); if (q) params.set("q", q);
+  const [list, sum, log] = await Promise.all([api("/api/invoices?" + params), api("/api/summary"), api("/api/notifications")]);
+  invoices = list; renderRows(); renderSummary(sum); renderLog(log);
+}
+
+function renderSummary(s) {
+  $("#s-open").textContent = money(s.open_amount);
+  $("#s-open-n").textContent = `${s.open_count} open invoice(s)`;
+  $("#s-overdue").textContent = money(s.overdue_amount);
+  $("#s-overdue-n").textContent = `${s.overdue_count} invoice(s) past due date`;
+  $("#s-paid").textContent = money(s.paid_this_month);
+  $("#s-vat").textContent = money(s.open_vat_amount);
+  $("#s-draft").textContent = `${s.draft_count} draft(s) not sent yet`;
+}
+
+function renderRows() {
+  const tb = $("#rows");
+  $("#empty").hidden = invoices.length > 0;
+  tb.innerHTML = invoices.map(i => {
+    let dueInfo = "";
+    if (i.is_overdue) dueInfo = `<div class="muted" style="color:var(--danger)">${i.days_overdue} day(s) overdue</div>`;
+    else if (i.days_until_due != null) dueInfo = `<div class="muted">in ${i.days_until_due} day(s)</div>`;
+    const rem = [];
+    if (!i.reminders_enabled) rem.push("off");
+    else if (i.overdue_reminder_count) rem.push(`${i.overdue_reminder_count}× sent, last ${fmtDate(i.last_overdue_reminder)}`);
+    else rem.push("on");
+    if (i.reminder_date) rem.push(`📅 ${fmtDate(i.reminder_date)}${i.reminder_date_done ? " ✓" : ""}`);
+    const act = [];
+    if (i.status === "DRAFT") act.push(`<button class="small secondary" data-act="sent" data-id="${i.id}">Mark sent</button>`);
+    if (i.status === "SENT") act.push(`<button class="small" data-act="paid" data-id="${i.id}">Mark paid</button>`);
+    if (i.status === "PAID") act.push(`<button class="small secondary" data-act="reopen" data-id="${i.id}">Reopen</button>`);
+    act.push(`<button class="small secondary" data-act="edit" data-id="${i.id}">Edit</button>`);
+    act.push(`<button class="small danger" data-act="del" data-id="${i.id}" title="Delete">✕</button>`);
+    return `<tr class="${i.is_overdue ? "overdue" : ""}">
+      <td><b>${esc(i.invoice_number)}</b></td>
+      <td>${esc(i.customer)}${i.contact_email ? `<div class="muted">${esc(i.contact_email)}</div>` : ""}</td>
+      <td>${fmtDate(i.invoice_date)}</td>
+      <td class="num">${money(i.net_amount)}</td>
+      <td class="num">${esc(i.vat_rate)}%</td>
+      <td class="num">${money(i.vat_amount)}</td>
+      <td class="num"><b>${money(i.gross_amount)}</b></td>
+      <td>${fmtDate(i.sent_date)}</td>
+      <td>${fmtDate(i.due_date)}${dueInfo}<div class="muted">${i.payment_terms_days} days</div></td>
+      <td><span class="badge ${i.display_status}">${i.display_status}</span></td>
+      <td>${i.status === "PAID" ? `${fmtDate(i.paid_date)}` : "–"}</td>
+      <td class="muted">${rem.join("<br>")}</td>
+      <td><div class="actions">${act.join("")}</div></td></tr>`;
+  }).join("");
+}
+
+function renderLog(items) {
+  $("#channels").textContent = `· channels: ${[CFG.email_configured && "e-mail", CFG.webhook_configured && "Teams/Slack", "outbox log"].filter(Boolean).join(", ")}` +
+    (CFG.notify_to ? ` · to ${CFG.notify_to}` : " · no recipients configured (config.ini)");
+  $("#log").innerHTML = items.length ? items.map(n => `<div class="log-item">
+      <span class="badge ${n.kind === "OVERDUE" ? "OVERDUE" : "SENT"}">${n.kind}</span>
+      <b>${esc(n.subject)}</b> <span class="muted">· ${esc(n.created_at.replace("T", " "))} · via ${esc(n.channels)}${n.recipients ? " → " + esc(n.recipients) : ""}</span>
+      ${n.error ? `<div style="color:var(--danger)">${esc(n.error)}</div>` : ""}
+      <details><summary class="muted">message</summary><pre>${esc(n.body)}</pre></details></div>`).join("")
+    : `<div class="empty">No messages sent yet.</div>`;
+}
+
+// ---------- invoice form ----------
+const F = $("#f-inv");
+function currentRate() { return F.vat_rate_sel.value === "custom" ? F.vat_rate_custom.value : F.vat_rate_sel.value; }
+function recalc() {
+  const net = parseAmount(F.net_amount.value), rate = parseAmount(currentRate());
+  if (isNaN(net) || isNaN(rate)) { F.vat_amount.value = F.gross_amount.value = ""; return; }
+  const vat = round2(net * rate / 100);
+  F.vat_amount.value = eur.format(vat); F.gross_amount.value = eur.format(round2(net + vat));
+}
+let dueTouched = false;
+function recalcDue() {
+  if (dueTouched) return;
+  const base = F.sent_date.value || F.invoice_date.value, terms = F.payment_terms_days.value;
+  F.due_date.value = base && terms !== "" ? addDays(base, terms) : "";
+}
+function togglePaid() { document.querySelectorAll(".paid-only").forEach(e => e.hidden = F.status.value !== "PAID"); }
+
+F.net_amount.addEventListener("input", recalc);
+F.vat_rate_custom.addEventListener("input", recalc);
+F.vat_rate_sel.addEventListener("change", () => { $("#custom-rate-wrap").hidden = F.vat_rate_sel.value !== "custom"; recalc(); });
+["invoice_date", "sent_date", "payment_terms_days"].forEach(n => F[n].addEventListener("input", recalcDue));
+F.sent_date.addEventListener("change", () => { if (F.sent_date.value && F.status.value === "DRAFT") { F.status.value = "SENT"; togglePaid(); } });
+F.due_date.addEventListener("input", () => dueTouched = !!F.due_date.value);
+F.status.addEventListener("change", () => {
+  if (F.status.value === "PAID") F.paid_date.value ||= today();
+  if (F.status.value !== "DRAFT" && !F.sent_date.value) { F.sent_date.value = today(); recalcDue(); }
+  togglePaid();
+});
+
+function openForm(inv) {
+  editingId = inv ? inv.id : null; dueTouched = false; $("#inv-err").textContent = "";
+  $("#dlg-title").textContent = inv ? `Edit invoice ${inv.invoice_number}` : "New invoice";
+  F.reset();
+  const v = inv || { invoice_date: today(), payment_terms_days: CFG.default_payment_terms_days, vat_rate: CFG.default_vat_rate, status: "DRAFT", reminders_enabled: true };
+  for (const k of ["invoice_number", "customer", "contact_email", "invoice_date", "sent_date", "payment_terms_days", "due_date", "status", "paid_date", "reminder_date", "notes"]) F[k].value = v[k] ?? "";
+  F.net_amount.value = v.net_amount != null ? String(v.net_amount).replace(".", ",") : "";
+  F.reminders_enabled.checked = v.reminders_enabled !== false;
+  const known = ["21", "9", "0"].includes(String(v.vat_rate));
+  F.vat_rate_sel.value = known ? String(v.vat_rate) : "custom";
+  F.vat_rate_custom.value = known ? "" : v.vat_rate;
+  $("#custom-rate-wrap").hidden = known;
+  // Keep auto-calculating the due date unless it was manually overridden earlier.
+  if (inv) dueTouched = inv.due_date !== addDays(inv.sent_date || inv.invoice_date, inv.payment_terms_days);
+  else recalcDue();
+  recalc(); togglePaid();
+  $("#dlg-inv").showModal(); F.invoice_number.focus();
+}
+
+F.addEventListener("submit", async e => {
+  e.preventDefault();
+  const body = {
+    invoice_number: F.invoice_number.value, customer: F.customer.value, contact_email: F.contact_email.value,
+    invoice_date: F.invoice_date.value, net_amount: F.net_amount.value, vat_rate: currentRate(),
+    sent_date: F.sent_date.value, payment_terms_days: F.payment_terms_days.value, due_date: F.due_date.value,
+    status: F.status.value, paid_date: F.paid_date.value,
+    reminders_enabled: F.reminders_enabled.checked, reminder_date: F.reminder_date.value, notes: F.notes.value,
+  };
+  try {
+    await api(editingId ? `/api/invoices/${editingId}` : "/api/invoices", { method: editingId ? "PUT" : "POST", body });
+    $("#dlg-inv").close(); toast(editingId ? "Invoice updated" : "Invoice created"); loadAll();
+  } catch (err) { $("#inv-err").textContent = err.message; }
+});
+
+// ---------- mark paid ----------
+const P = $("#f-paid");
+P.addEventListener("submit", async e => {
+  e.preventDefault();
+  try {
+    await api(`/api/invoices/${payingId}/paid`, { method: "POST", body: { paid_date: P.paid_date.value } });
+    $("#dlg-paid").close(); toast("Payment registered"); loadAll();
+  } catch (err) { $("#paid-err").textContent = err.message; }
+});
+
+document.addEventListener("click", async e => {
+  if (e.target.matches("[data-close]")) return e.target.closest("dialog").close();
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const inv = invoices.find(i => i.id === Number(b.dataset.id));
+  try {
+    switch (b.dataset.act) {
+      case "edit": return openForm(inv);
+      case "paid":
+        payingId = inv.id; $("#paid-err").textContent = "";
+        $("#paid-info").textContent = `${inv.invoice_number} · ${inv.customer} · due ${fmtDate(inv.due_date)} · ${money(inv.gross_amount)}`;
+        P.paid_date.value = today();
+        return $("#dlg-paid").showModal();
+      case "sent":
+        await api(`/api/invoices/${inv.id}/sent`, { method: "POST", body: { sent_date: today() } });
+        toast(`Marked as sent today – due in ${inv.payment_terms_days} days`); break;
+      case "reopen":
+        await api(`/api/invoices/${inv.id}/reopen`, { method: "POST" }); toast("Invoice reopened"); break;
+      case "del":
+        if (!confirm(`Delete invoice ${inv.invoice_number}? This cannot be undone.`)) return;
+        await api(`/api/invoices/${inv.id}`, { method: "DELETE" }); toast("Invoice deleted"); break;
+    }
+    loadAll();
+  } catch (err) { toast("Error: " + err.message); }
+});
+
+$("#tabs").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("active", x === b));
+  filter = b.dataset.f; loadAll();
+});
+let st; $("#search").addEventListener("input", () => { clearTimeout(st); st = setTimeout(loadAll, 250); });
+$("#btn-new").addEventListener("click", () => openForm(null));
+$("#btn-check").addEventListener("click", async () => {
+  try { const r = await api("/api/reminders/run", { method: "POST" });
+    toast(r.sent.length ? `${r.sent.length} message(s) sent` : "Nothing to send – no new overdue invoices or reminders");
+    if (r.sent.length) $("#log-panel").open = true; loadAll();
+  } catch (err) { toast("Error: " + err.message); }
+});
+
+(async () => {
+  CFG = await api("/api/config");
+  $("#title").textContent = `${CFG.company_name} – Invoice Tracker`;
+  await loadAll();
+  setInterval(loadAll, 60000);
+})();
+</script>
+</body>
+</html>
